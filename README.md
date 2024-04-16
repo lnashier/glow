@@ -8,5 +8,3 @@ The Glow is an idiomatic computational network framework.
 ## Examples
 
 [Examples](examples/README.md)
-
-
