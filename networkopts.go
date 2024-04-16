@@ -17,9 +17,9 @@ func (s *networkOpts) apply(opts []NetworkOpt) {
 	}
 }
 
-func Verbose(t bool) NetworkOpt {
+func Verbose() NetworkOpt {
 	return func(s *networkOpts) {
-		s.verbose = t
+		s.verbose = true
 	}
 }
 

@@ -69,7 +69,7 @@ func New(key Key, opt ...NetworkOpt) *Network {
 		cancel: cancel,
 		log: func(format string, a ...any) {
 			if opts.verbose {
-				fmt.Println(fmt.Sprintf(format, a...))
+				fmt.Println(fmt.Sprintf("[%s] %s", time.Now().Format("2006-01-02 15:04:05.000"), fmt.Sprintf(format, a...)))
 			}
 		},
 		lock:    &sync.RWMutex{},
@@ -321,7 +321,7 @@ func (n *Network) Start() error {
 		return ErrEmptyNetwork
 	}
 
-	n.log("keys: %v", keys)
+	n.log("Nodes: %v", keys)
 
 	wg, netctx := errgroup.WithContext(n.ctx)
 
@@ -339,8 +339,12 @@ func (n *Network) Start() error {
 				return ErrUnlinkedNodeFound
 			}
 
+			n.log("Node(%s) ingress(%v) egress(%v)", key, ingress, egress)
+
 			switch {
 			case len(ingress) == 0 && len(egress) > 0:
+				n.log("Seed(%s) running", key)
+
 				for {
 					select {
 					case <-netctx.Done():
@@ -370,6 +374,8 @@ func (n *Network) Start() error {
 					}
 				}
 			case len(ingress) > 0 && len(egress) > 0:
+				n.log("Node(%s) running", key)
+
 				nodewg, nodectx := errgroup.WithContext(netctx)
 
 				for _, ingressLink := range ingress {
@@ -408,6 +414,8 @@ func (n *Network) Start() error {
 					return err
 				}
 			case len(ingress) > 0 && len(egress) == 0:
+				n.log("Terminus(%s) running", key)
+
 				nodewg, nodectx := errgroup.WithContext(netctx)
 
 				for _, ingressLink := range ingress {
