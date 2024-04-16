@@ -23,7 +23,7 @@ func Network() *glow.Network {
 			nodeCount++
 			return fmt.Sprintf("node-%d", nodeCount)
 		},
-		glow.Verbose(true),
+		glow.Verbose(),
 	)
 
 	node0Count := 0

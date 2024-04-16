@@ -54,6 +54,9 @@ go run . up fannet
 
 ### Double Seed Funnel Network
 
+In this setup, there are two seed nodes that serve as the initial sources of information. These nodes funnel data
+towards a central point where they converge.
+
 ![](shapes/subwaynet.svg)
 
 ```shell
@@ -67,13 +70,53 @@ go run . up subwaynet
 
 ## Loop Networks
 
-### Single Node Self Loop Network
+### Once Single Seed One Node Self Loop Network
 
-TODO
+A single seed node initiates the flow of information within the network. Another node, acting as a processor, handles
+incoming data and redirects it back to itself, thus establishing a continuous loop within the network.
 
-### Two Nodes Loop Network (Classic Ping-Pong Network)
+![](shapes/selfloop1seednet.svg)
 
-TODO
+```shell
+go run . draw selfloop1seednet
+dot -Tsvg -O bin/selfloop1seednet.gv
+```
+
+```shell
+go run . up selfloop1seednet
+```
+
+### One Node Self Loop Network
+
+This setup features a self-loop with a single node in the network. However, in the absence of any events within the
+system, there is no communication taking place, resulting in an indefinite period of waiting.
+
+![](shapes/selfloopnet.svg)
+
+```shell
+go run . draw selfloopnet
+dot -Tsvg -O bin/selfloopnet.gv
+```
+
+```shell
+go run . up selfloopnet
+```
+
+### Two Nodes Loop Network (Two Nodes Ping-Pong Network)
+
+This setup implements a loop with two nodes. However, without any events present in the system, there is no
+communication occurring between the nodes, leading to an indefinite wait.
+
+![](shapes/pingpongnet.svg)
+
+```shell
+go run . draw pingpongnet
+dot -Tsvg -O bin/pingpongnet.gv
+```
+
+```shell
+go run . up pingpongnet
+```
 
 ### Once Single Seed Two Nodes Loop Network (Once Seeded Two Nodes Ping-Pong Network)
 
@@ -86,6 +129,23 @@ dot -Tsvg -O bin/pingpong1seednet.gv
 
 ```shell
 go run . up pingpong1seednet
+```
+
+### Infinite Single Seed Two Nodes Loop Network
+
+This configuration may seem straightforward initially, but it encounters a hurdle with race conditions. As the seed node
+continues to emit more events, the communication could eventually, based on link channel size grind to a halt, resulting
+in a deadlock.
+
+![](shapes/badnet.svg)
+
+```shell
+go run . draw badnet
+dot -Tsvg -O bin/badnet.gv
+```
+
+```shell
+go run . up badnet
 ```
 
 ### Once Single Seed Multi Nodes Loop Network (Once Seeded Multi Nodes Ping-Pong Network)
@@ -112,21 +172,4 @@ dot -Tsvg -O bin/pingpong2seednet.gv
 
 ```shell
 go run . up pingpong2seednet
-```
-
-### Infinite Single Seed Two Nodes Loop Network (Network that doesn't work)
-
-![](shapes/badnet.svg "Badnet")
-
-This configuration may seem straightforward initially, but it encounters a hurdle with race conditions. As the seed node
-continues to emit more events, the communication could eventually, based on link channel size grind to a halt, resulting
-in a deadlock.
-
-```shell
-go run . draw badnet
-dot -Tsvg -O bin/badnet.gv
-```
-
-```shell
-go run . up badnet
 ```

@@ -9,6 +9,9 @@ import (
 	"examples/onewaynet"
 	"examples/pingpong1seednet"
 	"examples/pingpong2seednet"
+	"examples/pingpongnet"
+	"examples/selfloop1seednet"
+	"examples/selfloopnet"
 	"examples/subwaynet"
 	"fmt"
 	"github.com/lnashier/glow"
@@ -23,22 +26,29 @@ func main() {
 		goarccli.App(func(svc *goarccli.Service) error {
 			svc.Register("draw", func(ctx context.Context, args []string) error {
 				net, _ := newNet(args[0])
-				data, err := glow.DOT(net)
-				if err != nil {
-					fmt.Println(err)
-					return err
-				}
+				if net != nil {
+					data, err := glow.DOT(net)
+					if err != nil {
+						fmt.Println(err)
+						return err
+					}
 
-				if _, err = os.Stat("bin"); os.IsNotExist(err) {
-					os.Mkdir("bin", os.FileMode(0755))
+					if _, err = os.Stat("bin"); os.IsNotExist(err) {
+						os.Mkdir("bin", os.FileMode(0755))
+					}
+					return os.WriteFile(fmt.Sprintf("bin/%s.gv", args[0]), data, os.FileMode(0755))
 				}
-				return os.WriteFile(fmt.Sprintf("bin/%s.gv", args[0]), data, os.FileMode(0755))
+				return nil
 			})
 
 			svc.Register("up", func(ctx context.Context, args []string) error {
 				net, fn := newNet(args[0])
-				goarc.Up(net)
-				fn()
+				if net != nil {
+					goarc.Up(net)
+					if fn != nil {
+						fn()
+					}
+				}
 				return nil
 			})
 			return nil
@@ -62,6 +72,12 @@ func newNet(name string) (*glow.Network, func()) {
 		return pingpong1seednet.Network(), pingpong1seednet.PrintResults
 	case "pingpong2seednet":
 		return pingpong2seednet.Network(), pingpong2seednet.PrintResults
+	case "pingpongnet":
+		return pingpongnet.Network(), pingpongnet.PrintResults
+	case "selfloop1seednet":
+		return selfloop1seednet.Network(), selfloop1seednet.PrintResults
+	case "selfloopnet":
+		return selfloopnet.Network(), selfloopnet.PrintResults
 	case "subwaynet":
 		return subwaynet.Network(), subwaynet.PrintResults
 	default:
