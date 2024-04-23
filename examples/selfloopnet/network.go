@@ -15,13 +15,12 @@ var nodeOutCounts sync.Map
 
 func Network() *glow.Network {
 	nodeCount := 0
-	n := glow.New(
-		func() string {
-			nodeCount++
-			return fmt.Sprintf("node-%d", nodeCount)
-		},
-		glow.Verbose(),
-	)
+	keygen := func() string {
+		nodeCount++
+		return fmt.Sprintf("node-%d", nodeCount)
+	}
+
+	n := glow.New(glow.Verbose(), glow.StopGracetime(time.Duration(5)*time.Second))
 
 	for i := range 1 {
 		nodeInCounts.Store(i+1, []string{})
@@ -38,7 +37,7 @@ func Network() *glow.Network {
 			nodeOutCounts.Store(1, append(outCounts.([]string), string(in)))
 		}()
 		return in, nil
-	})
+	}, glow.KeyFunc(keygen))
 	if err != nil {
 		panic(err)
 	}

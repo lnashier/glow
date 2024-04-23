@@ -11,6 +11,7 @@ import (
 
 var (
 	ErrNodeNotFound      = errors.New("node not found")
+	ErrBadNodeKey        = errors.New("bad node key")
 	ErrNodeAlreadyExists = errors.New("node already exists")
 	ErrLinkNotFound      = errors.New("link not found")
 	ErrLinkAlreadyExists = errors.New("link already exists")
@@ -33,17 +34,12 @@ type Link struct {
 	ch chan []byte
 }
 
-// Key returns a value of type K that is used to
-// generate unique keys for the nodes in the [Network].
-type Key func() string
-
 // Network represents nodes and their links.
 type Network struct {
 	ctx     context.Context
 	cancel  func()
 	log     func(format string, a ...any)
 	lock    *sync.RWMutex
-	key     Key
 	nodes   map[string]Node             // stores all nodes
 	ingress map[string]map[string]*Link // stores all ingress links for all nodes.
 	egress  map[string]map[string]*Link // stores all egress links for all nodes.
@@ -51,7 +47,7 @@ type Network struct {
 
 // New creates a new [Network].
 // Provided [Key] function is used to get unique keys for the nodes.
-func New(key Key, opt ...NetworkOpt) *Network {
+func New(opt ...NetworkOpt) *Network {
 	opts := defaultNetworkOpts
 	opts.apply(opt)
 
@@ -67,13 +63,12 @@ func New(key Key, opt ...NetworkOpt) *Network {
 	return &Network{
 		ctx:    ctx,
 		cancel: cancel,
+		lock:   &sync.RWMutex{},
 		log: func(format string, a ...any) {
 			if opts.verbose {
 				fmt.Println(fmt.Sprintf("[%s] %s", time.Now().Format("2006-01-02 15:04:05.000"), fmt.Sprintf(format, a...)))
 			}
 		},
-		lock:    &sync.RWMutex{},
-		key:     key,
 		nodes:   make(map[string]Node),
 		ingress: make(map[string]map[string]*Link),
 		egress:  make(map[string]map[string]*Link),
@@ -82,11 +77,20 @@ func New(key Key, opt ...NetworkOpt) *Network {
 
 // AddNode adds a new Node in the network.
 // Node key is retrieved from the provided [Key] function.
-func (n *Network) AddNode(node Node) (string, error) {
+func (n *Network) AddNode(node Node, opt ...NodeOpt) (string, error) {
 	n.lock.Lock()
 	defer n.lock.Unlock()
 
-	k := n.key()
+	opts := defaultNodeOpts
+	opts.apply(opt)
+
+	k := opts.key
+	if len(k) == 0 && opts.keyFunc != nil {
+		k = opts.keyFunc()
+	}
+	if len(k) == 0 {
+		return k, ErrBadNodeKey
+	}
 
 	if _, ok := n.nodes[k]; ok {
 		return k, ErrNodeAlreadyExists
@@ -451,8 +455,7 @@ func (n *Network) Start() error {
 	return wg.Wait()
 }
 
-// Stop stops the Network.
-// Once Network stops, all communications are seized.
+// Stop signals the Network to stop all the communications.
 func (n *Network) Stop() error {
 	n.log("Stop enter")
 	defer n.log("Stop exit")

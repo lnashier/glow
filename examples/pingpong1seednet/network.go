@@ -18,10 +18,12 @@ var node2OutCounts []string
 
 func Network() *glow.Network {
 	nodeCount := -1
-	n := glow.New(func() string {
+	keygen := func() string {
 		nodeCount++
 		return fmt.Sprintf("node-%d", nodeCount)
-	})
+	}
+
+	n := glow.New(glow.Verbose())
 
 	node0Count := 0
 	node0, err := n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
@@ -37,7 +39,7 @@ func Network() *glow.Network {
 		}()
 
 		return []byte(fmt.Sprintf("%d", node0Count)), nil
-	})
+	}, glow.KeyFunc(keygen))
 	if err != nil {
 		panic(err)
 	}
@@ -51,7 +53,7 @@ func Network() *glow.Network {
 		}()
 
 		return in, nil
-	})
+	}, glow.KeyFunc(keygen))
 	if err != nil {
 		panic(err)
 	}
@@ -62,7 +64,7 @@ func Network() *glow.Network {
 			node2OutCounts = append(node2OutCounts, string(in))
 		}()
 		return in, nil
-	})
+	}, glow.KeyFunc(keygen))
 	if err != nil {
 		panic(err)
 	}

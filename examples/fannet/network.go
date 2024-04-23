@@ -16,10 +16,12 @@ var nodeOutCounts sync.Map
 
 func Network() *glow.Network {
 	nodeCount := 0
-	n := glow.New(func() string {
+	keygen := func() string {
 		nodeCount++
 		return fmt.Sprintf("node-%d", nodeCount)
-	})
+	}
+
+	n := glow.New(glow.Verbose())
 
 	for i := range 3 {
 		seedCounts.Store(i, i*100)
@@ -45,7 +47,7 @@ func Network() *glow.Network {
 		}()
 
 		return []byte(fmt.Sprintf("%d", num.(int)+1)), nil
-	})
+	}, glow.KeyFunc(keygen))
 	if err != nil {
 		panic(err)
 	}
@@ -65,7 +67,7 @@ func Network() *glow.Network {
 		}()
 
 		return []byte(fmt.Sprintf("%d", num.(int)+1)), nil
-	})
+	}, glow.KeyFunc(keygen))
 	if err != nil {
 		panic(err)
 	}
@@ -85,7 +87,7 @@ func Network() *glow.Network {
 		}()
 
 		return []byte(fmt.Sprintf("%d", num.(int)+1)), nil
-	})
+	}, glow.KeyFunc(keygen))
 	if err != nil {
 		panic(err)
 	}
@@ -98,7 +100,7 @@ func Network() *glow.Network {
 			nodeOutCounts.Store(3, append(outCounts.([]string), string(in)))
 		}()
 		return in, nil
-	})
+	}, glow.KeyFunc(keygen))
 	if err != nil {
 		panic(err)
 	}
@@ -111,7 +113,7 @@ func Network() *glow.Network {
 			nodeOutCounts.Store(4, append(outCounts.([]string), string(in)))
 		}()
 		return in, nil
-	})
+	}, glow.KeyFunc(keygen))
 	if err != nil {
 		panic(err)
 	}
@@ -124,7 +126,7 @@ func Network() *glow.Network {
 			nodeOutCounts.Store(5, append(outCounts.([]string), string(in)))
 		}()
 		return in, nil
-	})
+	}, glow.KeyFunc(keygen))
 	if err != nil {
 		panic(err)
 	}
@@ -137,7 +139,7 @@ func Network() *glow.Network {
 			nodeOutCounts.Store(6, append(outCounts.([]string), string(in)))
 		}()
 		return in, nil
-	})
+	}, glow.KeyFunc(keygen))
 	if err != nil {
 		panic(err)
 	}
@@ -150,7 +152,7 @@ func Network() *glow.Network {
 			nodeOutCounts.Store(7, append(outCounts.([]string), string(in)))
 		}()
 		return in, nil
-	})
+	}, glow.KeyFunc(keygen))
 	if err != nil {
 		panic(err)
 	}
