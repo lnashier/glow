@@ -7,9 +7,8 @@ import (
 )
 
 const dotTmpl = `strict digraph {
-    node [shape=ellipse]
 	{{ range $n := .Nodes -}}
-        "{{ $n }}" [style="{{ style $n }}", fillcolor="{{ color $n }}"];
+        "{{ $n }}" [shape="{{ prop "shape" $n }}" style="{{ prop "style" $n }}", fillcolor="{{ prop "color" $n }}"];
     {{ end -}}
     {{ range .Links -}}
         "{{ from . }}" -> "{{ to . }}";
@@ -20,16 +19,34 @@ const dotTmpl = `strict digraph {
 func DOT(n *Network) ([]byte, error) {
 	t := template.New("tmpl")
 	t.Funcs(template.FuncMap{
-		"color": func(k string) string {
+		"prop": func(prop string, k string) string {
 			node, _ := n.Node(k)
-			if node.distributor {
-				return "lightyellow"
+			egress := n.Egress(k)
+
+			switch {
+			// node with egress and distributor mode set
+			case len(egress) > 0 && node.distributor:
+				if prop == "color" {
+					return "lightyellow"
+				}
+				if prop == "style" {
+					return "filled"
+				}
+			// any node with egress is broadcaster node if not distributor
+			case len(egress) > 0:
+				if prop == "color" {
+					return "lightgreen"
+				}
+				if prop == "style" {
+					return "filled"
+				}
 			}
-			return "lightgreen"
-		},
-		"style": func(k string) string {
-			if !slices.Contains(n.Seeds(), k) && !slices.Contains(n.Termini(), k) {
-				return "filled"
+
+			if prop == "shape" {
+				if slices.Contains(n.Seeds(), k) {
+					return "circle"
+				}
+				return "ellipse"
 			}
 			return ""
 		},
