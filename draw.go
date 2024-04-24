@@ -2,13 +2,14 @@ package glow
 
 import (
 	"bytes"
-	"slices"
 	"text/template"
 )
 
 const dotTmpl = `strict digraph {
+    node [shape=ellipse]
+
 	{{ range $n := .Nodes -}}
-        "{{ $n }}" [shape="{{ prop "shape" $n }}" style="{{ prop "style" $n }}", fillcolor="{{ prop "color" $n }}"];
+        "{{ $n }}" [style="{{ prop "style" $n }}", fillcolor="{{ prop "color" $n }}"];
     {{ end -}}
     {{ range .Links -}}
         "{{ from . }}" -> "{{ to . }}";
@@ -23,31 +24,16 @@ func DOT(n *Network) ([]byte, error) {
 			node, _ := n.Node(k)
 			egress := n.Egress(k)
 
-			switch {
 			// node with egress and distributor mode set
-			case len(egress) > 0 && node.distributor:
+			if len(egress) > 0 && node.distributor {
 				if prop == "color" {
 					return "lightyellow"
 				}
 				if prop == "style" {
 					return "filled"
 				}
-			// any node with egress is broadcaster node if not distributor
-			case len(egress) > 0:
-				if prop == "color" {
-					return "lightgreen"
-				}
-				if prop == "style" {
-					return "filled"
-				}
 			}
 
-			if prop == "shape" {
-				if slices.Contains(n.Seeds(), k) {
-					return "circle"
-				}
-				return "ellipse"
-			}
 			return ""
 		},
 		"from": func(l *Link) string {
