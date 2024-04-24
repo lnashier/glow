@@ -15,7 +15,7 @@ var nodeInCounts sync.Map
 var nodeOutCounts sync.Map
 
 func Network() *glow.Network {
-	n := glow.New(glow.Verbose())
+	n := glow.New(glow.Verbose(), glow.IgnoreIsolatedNodes())
 
 	node1ID := "node-1"
 	seedCounts.Store(node1ID, 0)
@@ -74,8 +74,8 @@ func Network() *glow.Network {
 		return in, nil
 	}, glow.Key(node3ID))
 
-	n.AddLink(node1ID, node2ID, 0)
-	n.AddLink(node1ID, node3ID, 0)
+	n.AddLink(node1ID, node2ID)
+	n.AddLink(node1ID, node3ID)
 
 	return n
 }
