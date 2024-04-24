@@ -11,7 +11,7 @@
 <!-- node&#45;1 -->
 <g id="node1" class="node">
 <title>node&#45;1</title>
-<ellipse fill="none" stroke="black" cx="36.51" cy="-18" rx="36.51" ry="18"/>
+<ellipse fill="lightgreen" stroke="black" cx="36.51" cy="-18" rx="36.51" ry="18"/>
 <text text-anchor="middle" x="36.51" y="-12.95" font-family="Times,serif" font-size="14.00">node&#45;1</text>
 </g>
 <!-- node&#45;1&#45;&gt;node&#45;1 -->

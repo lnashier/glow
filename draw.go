@@ -2,28 +2,50 @@ package glow
 
 import (
 	"bytes"
+	"slices"
 	"text/template"
 )
 
 const dotTmpl = `strict digraph {
-    {{ range $n := .Nodes -}}
-        "{{ $n }}";
+    node [shape=ellipse]
+	{{ range $n := .Nodes -}}
+        "{{ $n }}" [style="{{ style $n }}", fillcolor="{{ color $n }}"];
     {{ end -}}
     {{ range .Links -}}
-        "{{ .X }}" -> "{{ .Y }}";
+        "{{ from . }}" -> "{{ to . }}";
     {{ end }}
 }`
 
 // DOT describes the Network.
 func DOT(n *Network) ([]byte, error) {
-	return generate(n, dotTmpl)
-}
+	t := template.New("tmpl")
+	t.Funcs(template.FuncMap{
+		"color": func(k string) string {
+			node, _ := n.Node(k)
+			if node.distributor {
+				return "lightyellow"
+			}
+			return "lightgreen"
+		},
+		"style": func(k string) string {
+			if !slices.Contains(n.Seeds(), k) && !slices.Contains(n.Termini(), k) {
+				return "filled"
+			}
+			return ""
+		},
+		"from": func(l *Link) string {
+			return l.x
+		},
+		"to": func(l *Link) string {
+			return l.y
+		},
+	})
 
-func generate(n *Network, tmpl string) ([]byte, error) {
-	t, err := template.New("tmpl").Parse(tmpl)
+	_, err := t.Parse(dotTmpl)
 	if err != nil {
 		return nil, err
 	}
+
 	var tpl bytes.Buffer
 	if err := t.Execute(&tpl, n); err != nil {
 		return nil, err

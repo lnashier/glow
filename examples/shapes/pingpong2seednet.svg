@@ -17,11 +17,11 @@
 <!-- node&#45;2 -->
 <g id="node3" class="node">
 <title>node&#45;2</title>
-<ellipse fill="none" stroke="black" cx="81.51" cy="-90" rx="36.51" ry="18"/>
+<ellipse fill="lightgreen" stroke="black" cx="81.51" cy="-90" rx="36.51" ry="18"/>
 <text text-anchor="middle" x="81.51" y="-84.95" font-family="Times,serif" font-size="14.00">node&#45;2</text>
 </g>
 <!-- node&#45;0&#45;&gt;node&#45;2 -->
-<g id="edge3" class="edge">
+<g id="edge1" class="edge">
 <title>node&#45;0&#45;&gt;node&#45;2</title>
 <path fill="none" stroke="black" d="M47.17,-144.41C52.44,-136.22 58.92,-126.14 64.82,-116.95"/>
 <polygon fill="black" stroke="black" points="67.64,-119.05 70.1,-108.74 61.75,-115.26 67.64,-119.05"/>
@@ -33,7 +33,7 @@
 <text text-anchor="middle" x="127.51" y="-156.95" font-family="Times,serif" font-size="14.00">node&#45;1</text>
 </g>
 <!-- node&#45;1&#45;&gt;node&#45;2 -->
-<g id="edge4" class="edge">
+<g id="edge2" class="edge">
 <title>node&#45;1&#45;&gt;node&#45;2</title>
 <path fill="none" stroke="black" d="M116.61,-144.41C111.22,-136.22 104.6,-126.14 98.57,-116.95"/>
 <polygon fill="black" stroke="black" points="101.58,-115.17 93.16,-108.73 95.73,-119.01 101.58,-115.17"/>
@@ -41,17 +41,17 @@
 <!-- node&#45;3 -->
 <g id="node4" class="node">
 <title>node&#45;3</title>
-<ellipse fill="none" stroke="black" cx="81.51" cy="-18" rx="36.51" ry="18"/>
+<ellipse fill="lightgreen" stroke="black" cx="81.51" cy="-18" rx="36.51" ry="18"/>
 <text text-anchor="middle" x="81.51" y="-12.95" font-family="Times,serif" font-size="14.00">node&#45;3</text>
 </g>
 <!-- node&#45;2&#45;&gt;node&#45;3 -->
-<g id="edge1" class="edge">
+<g id="edge3" class="edge">
 <title>node&#45;2&#45;&gt;node&#45;3</title>
 <path fill="none" stroke="black" d="M75.63,-72.05C74.84,-64.57 74.59,-55.58 74.88,-47.14"/>
 <polygon fill="black" stroke="black" points="78.36,-47.51 75.54,-37.3 71.37,-47.04 78.36,-47.51"/>
 </g>
 <!-- node&#45;3&#45;&gt;node&#45;2 -->
-<g id="edge2" class="edge">
+<g id="edge4" class="edge">
 <title>node&#45;3&#45;&gt;node&#45;2</title>
 <path fill="none" stroke="black" d="M87.37,-35.79C88.17,-43.25 88.43,-52.24 88.15,-60.69"/>
 <polygon fill="black" stroke="black" points="84.66,-60.33 87.49,-70.54 91.65,-60.8 84.66,-60.33"/>
