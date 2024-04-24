@@ -1,4 +1,4 @@
-package fannet
+package fandistributsnet
 
 import (
 	"context"
@@ -33,7 +33,7 @@ func Network() *glow.Network {
 	}
 
 	node0, err := n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
-		xtime.SleepWithContext(ctx, time.Second*5)
+		xtime.SleepWithContext(ctx, time.Second*1)
 
 		num, _ := seedCounts.Load(0)
 		seedCounts.Store(0, num.(int)+1)
@@ -53,7 +53,7 @@ func Network() *glow.Network {
 	}
 
 	node1, err := n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
-		xtime.SleepWithContext(ctx, time.Second*5)
+		xtime.SleepWithContext(ctx, time.Second*2)
 
 		num, _ := seedCounts.Load(1)
 		seedCounts.Store(1, num.(int)+1)
@@ -73,7 +73,7 @@ func Network() *glow.Network {
 	}
 
 	node2, err := n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
-		xtime.SleepWithContext(ctx, time.Second*5)
+		xtime.SleepWithContext(ctx, time.Second*3)
 
 		num, _ := seedCounts.Load(2)
 		seedCounts.Store(2, num.(int)+1)
@@ -113,7 +113,7 @@ func Network() *glow.Network {
 			nodeOutCounts.Store(4, append(outCounts.([]string), string(in)))
 		}()
 		return in, nil
-	}, glow.KeyFunc(keygen))
+	}, glow.KeyFunc(keygen), glow.Distributor())
 	if err != nil {
 		panic(err)
 	}

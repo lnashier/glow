@@ -27,9 +27,11 @@ func Network() *glow.Network {
 
 		num, _ := seedCounts.Load(node1ID)
 
-		if num.(int) > 10 {
-			return nil, glow.ErrSeedingDone
-		}
+		/*
+			if num.(int) > 10 {
+				return nil, glow.ErrSeedingDone
+			}
+		*/
 
 		seedCounts.Store(node1ID, num.(int)+1)
 

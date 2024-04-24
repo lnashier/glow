@@ -35,7 +35,7 @@ dot -Tsvg -o shapes/onewaynet.svg bin/onewaynet.gv
 go run . up onewaynet
 ```
 
-### Single Seed Multi Nodes Broadcasting Network
+### Single Seed Multi Nodes Broadcast Network
 
 This configuration closely resembles the basic setup, with information flowing from the seed node through each
 intermediate node until it reaches the network's end. However, in this variation, after processing, intermediate nodes
@@ -52,9 +52,24 @@ dot -Tsvg -o shapes/fan1seednet.svg bin/fan1seednet.gv
 go run . up fan1seednet
 ```
 
-### Fan In Fan Out Network
+### Infinite Single Seed One Way Distribution Network
 
-This represents a classic fan-in fan-out network configuration. Here, a summarization node gathers all events in one
+This configuration illustrates a simple arrangement where the seed node distributes events among its connected nodes.
+
+![](shapes/distributornet.svg)
+
+```shell
+go run . draw distributornet
+dot -Tsvg -o shapes/distributornet.svg bin/distributornet.gv
+```
+
+```shell
+go run . up distributornet
+```
+
+### Fan In Fan Out Broadcast Network
+
+This represents a fan-in fan-out broadcast network configuration. Here, a summarization node gathers all events in one
 location and then disperses them, broadcasting incoming events to subsequent nodes in the chain.
 
 ![](shapes/fannet.svg)
@@ -66,6 +81,22 @@ dot -Tsvg -o shapes/fannet.svg bin/fannet.gv
 
 ```shell
 go run . up fannet
+```
+
+### Fan In Fan Out Distribution Network
+
+This is a fan-in fan-out distribution network setup. In this configuration, an aggregator node centralizes all events
+before distributing incoming events to subsequent nodes in the chain.
+
+![](shapes/fandistributsnet.svg)
+
+```shell
+go run . draw fandistributsnet
+dot -Tsvg -o shapes/fandistributsnet.svg bin/fandistributsnet.gv
+```
+
+```shell
+go run . up fandistributsnet
 ```
 
 ### Double Seed Funnel Network
@@ -190,20 +221,3 @@ dot -Tsvg -o shapes/pingpong2seednet.svg bin/pingpong2seednet.gv
 go run . up pingpong2seednet
 ```
 
-## Distributor Networks
-
-### Infinite Single Seed One Way Distributor Network
-
-This configuration illustrates a simple arrangement where the seed node distributes events among its connected nodes.
-
-![](shapes/distributornet.svg)
-
-
-```shell
-go run . draw distributornet
-dot -Tsvg -o shapes/distributornet.svg bin/distributornet.gv
-```
-
-```shell
-go run . up distributornet
-```
