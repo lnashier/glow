@@ -18,7 +18,7 @@ var (
 	ErrNodeIsConnected   = errors.New("node is connected")
 	ErrEmptyNetwork      = errors.New("network is empty")
 	ErrSeedingDone       = errors.New("seeding is done")
-	ErrUnlinkedNodeFound = errors.New("unlinked node found")
+	ErrIsolatedNodeFound = errors.New("isolated node found")
 )
 
 // Node defines a node in the [Network].
@@ -39,7 +39,7 @@ type Network struct {
 	ctx     context.Context
 	cancel  func()
 	log     func(format string, a ...any)
-	lock    *sync.RWMutex
+	mu      *sync.RWMutex
 	nodes   map[string]Node             // stores all nodes
 	ingress map[string]map[string]*Link // stores all ingress links for all nodes.
 	egress  map[string]map[string]*Link // stores all egress links for all nodes.
@@ -63,7 +63,7 @@ func New(opt ...NetworkOpt) *Network {
 	return &Network{
 		ctx:    ctx,
 		cancel: cancel,
-		lock:   &sync.RWMutex{},
+		mu:     &sync.RWMutex{},
 		log: func(format string, a ...any) {
 			if opts.verbose {
 				fmt.Println(fmt.Sprintf("[%s] %s", time.Now().Format("2006-01-02 15:04:05.000"), fmt.Sprintf(format, a...)))
@@ -78,8 +78,8 @@ func New(opt ...NetworkOpt) *Network {
 // AddNode adds a new Node in the network.
 // Node key is retrieved from the provided [Key] function.
 func (n *Network) AddNode(node Node, opt ...NodeOpt) (string, error) {
-	n.lock.Lock()
-	defer n.lock.Unlock()
+	n.mu.Lock()
+	defer n.mu.Unlock()
 
 	opts := defaultNodeOpts
 	opts.apply(opt)
@@ -103,8 +103,8 @@ func (n *Network) AddNode(node Node, opt ...NodeOpt) (string, error) {
 
 // Node returns the node identified by the provided key.
 func (n *Network) Node(k string) (Node, error) {
-	n.lock.RLock()
-	defer n.lock.RUnlock()
+	n.mu.RLock()
+	defer n.mu.RUnlock()
 
 	node, ok := n.nodes[k]
 	if !ok {
@@ -117,8 +117,8 @@ func (n *Network) Node(k string) (Node, error) {
 // RemoveNode removes a node with provided key.
 // A node can't be removed if it is connected/linked to any other node in the network.
 func (n *Network) RemoveNode(k string) error {
-	n.lock.Lock()
-	defer n.lock.Unlock()
+	n.mu.Lock()
+	defer n.mu.Unlock()
 
 	if _, ok := n.nodes[k]; !ok {
 		return ErrNodeNotFound
@@ -140,8 +140,8 @@ func (n *Network) RemoveNode(k string) error {
 // Nodes returns all the nodes as their unique keys in the network.
 // Node should be called to get actual node.
 func (n *Network) Nodes() []string {
-	n.lock.RLock()
-	defer n.lock.RUnlock()
+	n.mu.RLock()
+	defer n.mu.RUnlock()
 
 	keys := make([]string, 0, len(n.nodes))
 	for k := range n.nodes {
@@ -154,15 +154,13 @@ func (n *Network) Nodes() []string {
 // Seeds returns all the nodes that have only egress links.
 // Node should be called to get actual node.
 func (n *Network) Seeds() []string {
-	n.lock.RLock()
-	defer n.lock.RUnlock()
+	n.mu.RLock()
+	defer n.mu.RUnlock()
 
 	var keys []string
 
 	for k := range n.nodes {
-		ingress := n.Ingress(k)
-		egress := n.Egress(k)
-		if len(ingress) == 0 && len(egress) > 0 {
+		if len(n.Ingress(k)) == 0 && len(n.Egress(k)) > 0 {
 			keys = append(keys, k)
 		}
 	}
@@ -173,15 +171,13 @@ func (n *Network) Seeds() []string {
 // Termini returns all the nodes that have only ingress links.
 // Node should be called to get actual node.
 func (n *Network) Termini() []string {
-	n.lock.RLock()
-	defer n.lock.RUnlock()
+	n.mu.RLock()
+	defer n.mu.RUnlock()
 
 	var keys []string
 
 	for k := range n.nodes {
-		ingress := n.Ingress(k)
-		egress := n.Egress(k)
-		if len(ingress) > 0 && len(egress) == 0 {
+		if len(n.Ingress(k)) > 0 && len(n.Egress(k)) == 0 {
 			keys = append(keys, k)
 		}
 	}
@@ -205,8 +201,8 @@ func (n *Network) AddLink(from, to string, size int) error {
 		return err
 	}
 
-	n.lock.Lock()
-	defer n.lock.Unlock()
+	n.mu.Lock()
+	defer n.mu.Unlock()
 
 	link := &Link{
 		X:  from,
@@ -231,8 +227,8 @@ func (n *Network) AddLink(from, to string, size int) error {
 
 // Link returns connection between from and to nodes if any.
 func (n *Network) Link(from, to string) (*Link, error) {
-	n.lock.RLock()
-	defer n.lock.RUnlock()
+	n.mu.RLock()
+	defer n.mu.RUnlock()
 
 	outLinks, ok := n.egress[from]
 	if !ok {
@@ -255,8 +251,8 @@ func (n *Network) RemoveLink(from, to string) error {
 		return err
 	}
 
-	n.lock.Lock()
-	defer n.lock.Unlock()
+	n.mu.Lock()
+	defer n.mu.Unlock()
 
 	delete(n.ingress[to], from)
 	delete(n.egress[from], to)
@@ -266,8 +262,8 @@ func (n *Network) RemoveLink(from, to string) error {
 
 // Links returns all the links in the Network.
 func (n *Network) Links() []*Link {
-	n.lock.RLock()
-	defer n.lock.RUnlock()
+	n.mu.RLock()
+	defer n.mu.RUnlock()
 
 	var links []*Link
 	for _, outLinks := range n.egress {
@@ -281,8 +277,8 @@ func (n *Network) Links() []*Link {
 
 // Ingress returns all the ingress links for the Node.
 func (n *Network) Ingress(k string) []*Link {
-	n.lock.RLock()
-	defer n.lock.RUnlock()
+	n.mu.RLock()
+	defer n.mu.RUnlock()
 
 	ingress := n.ingress[k]
 	if len(ingress) < 1 {
@@ -299,8 +295,8 @@ func (n *Network) Ingress(k string) []*Link {
 
 // Egress returns all the egress links for the Node.
 func (n *Network) Egress(k string) []*Link {
-	n.lock.RLock()
-	defer n.lock.RUnlock()
+	n.mu.RLock()
+	defer n.mu.RUnlock()
 
 	egress := n.egress[k]
 	if len(egress) < 1 {
@@ -340,7 +336,7 @@ func (n *Network) Start() error {
 			egress := n.Egress(key)
 
 			if len(ingress) == 0 && len(egress) == 0 {
-				return ErrUnlinkedNodeFound
+				return ErrIsolatedNodeFound
 			}
 
 			n.log("Node(%s) ingress(%v) egress(%v)", key, ingress, egress)
