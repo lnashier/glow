@@ -75,12 +75,12 @@ func Network() *glow.Network {
 	// >= seeds - 1
 	size := 3
 
-	err = n.AddLink(node0, node1, size)
+	err = n.AddLink(node0, node1, glow.Size(size))
 	if err != nil {
 		panic(err)
 	}
 
-	err = n.AddLink(node1, node1, size)
+	err = n.AddLink(node1, node1, glow.Size(size))
 	if err != nil {
 		panic(err)
 	}

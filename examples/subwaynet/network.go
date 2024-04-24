@@ -20,7 +20,7 @@ func Network() *glow.Network {
 	Sub1Network(n)
 	Sub2Network(n)
 
-	err := n.AddLink("node-102", "node-201", 0)
+	err := n.AddLink("node-102", "node-201")
 	if err != nil {
 		panic(err)
 	}
@@ -97,12 +97,12 @@ func Sub1Network(n *glow.Network) {
 
 	size := 0
 
-	err = n.AddLink(node0, node1, size)
+	err = n.AddLink(node0, node1, glow.Size(size))
 	if err != nil {
 		panic(err)
 	}
 
-	err = n.AddLink(node1, node2, size)
+	err = n.AddLink(node1, node2, glow.Size(size))
 	if err != nil {
 		panic(err)
 	}
@@ -159,7 +159,7 @@ func Sub2Network(n *glow.Network) {
 
 	size := 0
 
-	err = n.AddLink(node0, node1, size)
+	err = n.AddLink(node0, node1, glow.Size(size))
 	if err != nil {
 		panic(err)
 	}

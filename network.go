@@ -37,9 +37,10 @@ type Node struct {
 // Link captures connection between two nodes.
 // Data flows from x to y over the [Link].
 type Link struct {
-	x  string
-	y  string
-	ch chan []byte
+	x      string
+	y      string
+	paused bool
+	ch     chan []byte
 }
 
 // Network represents nodes and their links.
@@ -198,8 +199,11 @@ func (n *Network) Termini() []string {
 }
 
 // AddLink connects from node and to nodes.
-// Once Link is made, nodes are said to be communicated over Link channel.
-func (n *Network) AddLink(from, to string, size int) error {
+// Once Link is made, nodes are said to be communicated over the Link channel.
+// See:
+//   - RemoveLink
+//   - PauseLink
+func (n *Network) AddLink(from, to string, opt ...LinkOpt) error {
 	if _, err := n.Link(from, to); !errors.Is(err, ErrLinkNotFound) {
 		return ErrLinkAlreadyExists
 	}
@@ -216,10 +220,13 @@ func (n *Network) AddLink(from, to string, size int) error {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
+	opts := defaultLinkOpts
+	opts.apply(opt)
+
 	var ch chan []byte
 
 	if xNode.distributor {
-		// Check if there exists another egress for node-x to get existing channel
+		// if there exists another egress for node-x then get existing channel
 		if xEgress := n.egress[xNode.key]; len(xEgress) > 0 {
 			for _, xLink := range xEgress {
 				ch = xLink.ch
@@ -229,7 +236,7 @@ func (n *Network) AddLink(from, to string, size int) error {
 	}
 
 	if ch == nil {
-		ch = make(chan []byte, size)
+		ch = make(chan []byte, opts.size)
 	}
 
 	link := &Link{
@@ -253,6 +260,61 @@ func (n *Network) AddLink(from, to string, size int) error {
 	return nil
 }
 
+// RemoveLink disconnects "from" node and "to" node.
+// See:
+//   - AddLink
+//   - PauseLink
+func (n *Network) RemoveLink(from, to string) error {
+	_, err := n.Link(from, to)
+	if err != nil {
+		return err
+	}
+
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	delete(n.ingress[to], from)
+	delete(n.egress[from], to)
+
+	return nil
+}
+
+// PauseLink pauses all communication "from" node and "to" node.
+// PauseLink is only effective If "from" node is a broadcaster node.
+// See:
+//   - ResumeLink
+//   - RemoveLink, if "from" node is a distributor Node.
+func (n *Network) PauseLink(from, to string) error {
+	link, err := n.Link(from, to)
+	if err != nil {
+		return err
+	}
+
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	link.paused = true
+
+	return nil
+}
+
+// ResumeLink resumes communication from node and to node.
+// See:
+//   - PauseLink
+func (n *Network) ResumeLink(from, to string) error {
+	link, err := n.Link(from, to)
+	if err != nil {
+		return err
+	}
+
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	link.paused = false
+
+	return nil
+}
+
 // Link returns connection between from and to nodes if any.
 func (n *Network) Link(from, to string) (*Link, error) {
 	n.mu.RLock()
@@ -269,23 +331,6 @@ func (n *Network) Link(from, to string) (*Link, error) {
 	}
 
 	return link, nil
-}
-
-// RemoveLink disconnects from node and to node.
-// Underlying communication channel is closed.
-func (n *Network) RemoveLink(from, to string) error {
-	_, err := n.Link(from, to)
-	if err != nil {
-		return err
-	}
-
-	n.mu.Lock()
-	defer n.mu.Unlock()
-
-	delete(n.ingress[to], from)
-	delete(n.egress[from], to)
-
-	return nil
 }
 
 // Links returns all the links in the Network.
