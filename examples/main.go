@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"examples/badnet"
+	"examples/distributornet"
 	"examples/fan1seednet"
 	"examples/fannet"
 	"examples/loop1seednet"
@@ -61,6 +62,8 @@ func newNet(name string) (*glow.Network, func()) {
 	switch name {
 	case "badnet":
 		return badnet.Network(), badnet.PrintResults
+	case "distributornet":
+		return distributornet.Network(), distributornet.PrintResults
 	case "fan1seednet":
 		return fan1seednet.Network(), fan1seednet.PrintResults
 	case "fannet":
