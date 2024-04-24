@@ -6,6 +6,7 @@ import (
 	"examples/fan1seednet"
 	"examples/fannet"
 	"examples/loop1seednet"
+	"examples/oncenet"
 	"examples/onewaynet"
 	"examples/pingpong1seednet"
 	"examples/pingpong2seednet"
@@ -66,6 +67,8 @@ func newNet(name string) (*glow.Network, func()) {
 		return fannet.Network(), fannet.PrintResults
 	case "loop1seednet":
 		return loop1seednet.Network(), loop1seednet.PrintResults
+	case "oncenet":
+		return oncenet.Network(), oncenet.PrintResults
 	case "onewaynet":
 		return onewaynet.Network(), onewaynet.PrintResults
 	case "pingpong1seednet":

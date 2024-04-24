@@ -2,7 +2,23 @@
 
 ## One Way Networks
 
-### Classic One Way Path
+### Once Single Seed One Way Linear Network
+
+In this network configuration, a single seed node initiates the transmission of data within the network. The data
+follows a linear path, progressing sequentially through each node until it reaches the terminal or sink node.
+
+![](shapes/oncenet.svg)
+
+```shell
+go run . up oncenet
+```
+
+```shell
+go run . draw oncenet
+dot -Tsvg -O bin/oncenet.gv
+```
+
+### Infinite Single Seed One Way Linear Network
 
 This configuration represents a basic setup where information flows from the seed node, passing through each
 intermediate node until it reaches the end of the network. At each node, incoming events are processed according to its
@@ -134,7 +150,7 @@ go run . up pingpong1seednet
 ### Infinite Single Seed Two Nodes Loop Network
 
 This configuration may seem straightforward initially, but it encounters a hurdle with race conditions. As the seed node
-continues to emit more events, the communication could eventually, based on link channel size grind to a halt, resulting
+continues to emit more events, the communication could eventually, based on link channel size, grind to a halt resulting
 in a deadlock.
 
 ![](shapes/badnet.svg)
