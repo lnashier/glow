@@ -13,7 +13,7 @@ The `glow` is an idiomatic computational network framework.
 
 - [x] Seed Node
 - [x] Terminal Node
-- [x] Broadcaster Node
-- [ ] Distributor Node
 - [x] Multiple ingress / egress links
+- [x] Broadcaster Node
+- [x] Distributor Node
 - [ ] Signaling
