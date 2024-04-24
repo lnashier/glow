@@ -10,12 +10,12 @@ follows a linear path, progressing sequentially through each node until it reach
 ![](shapes/oncenet.svg)
 
 ```shell
-go run . up oncenet
+go run . draw oncenet
+dot -Tsvg -o shapes/oncenet.svg bin/oncenet.gv
 ```
 
 ```shell
-go run . draw oncenet
-dot -Tsvg -O bin/oncenet.gv
+go run . up oncenet
 ```
 
 ### Infinite Single Seed One Way Linear Network
@@ -27,12 +27,12 @@ implemented function before being forwarded to the next node in the chain.
 ![](shapes/onewaynet.svg)
 
 ```shell
-go run . up onewaynet
+go run . draw onewaynet
+dot -Tsvg -o shapes/onewaynet.svg bin/onewaynet.gv
 ```
 
 ```shell
-go run . draw onewaynet
-dot -Tsvg -O bin/onewaynet.gv
+go run . up onewaynet
 ```
 
 ### Single Seed Multi Nodes Broadcasting Network
@@ -45,7 +45,7 @@ broadcast incoming events to the subsequent nodes in the chain.
 
 ```shell
 go run . draw fan1seednet
-dot -Tsvg -O bin/fan1seednet.gv
+dot -Tsvg -o shapes/fan1seednet.svg bin/fan1seednet.gv
 ```
 
 ```shell
@@ -61,7 +61,7 @@ location and then disperses them, broadcasting incoming events to subsequent nod
 
 ```shell
 go run . draw fannet
-dot -Tsvg -O bin/fannet.gv
+dot -Tsvg -o shapes/fannet.svg bin/fannet.gv
 ```
 
 ```shell
@@ -77,7 +77,7 @@ towards a central point where they converge.
 
 ```shell
 go run . draw subwaynet
-dot -Tsvg -O bin/subwaynet.gv
+dot -Tsvg -o shapes/subwaynet.svg bin/subwaynet.gv
 ```
 
 ```shell
@@ -95,7 +95,7 @@ incoming data and redirects it back to itself, thus establishing a continuous lo
 
 ```shell
 go run . draw selfloop1seednet
-dot -Tsvg -O bin/selfloop1seednet.gv
+dot -Tsvg -o shapes/selfloop1seednet.svg bin/selfloop1seednet.gv
 ```
 
 ```shell
@@ -111,7 +111,7 @@ system, there is no communication taking place, resulting in an indefinite perio
 
 ```shell
 go run . draw selfloopnet
-dot -Tsvg -O bin/selfloopnet.gv
+dot -Tsvg -o shapes/selfloopnet.svg bin/selfloopnet.gv
 ```
 
 ```shell
@@ -127,7 +127,7 @@ communication occurring between the nodes, leading to an indefinite wait.
 
 ```shell
 go run . draw pingpongnet
-dot -Tsvg -O bin/pingpongnet.gv
+dot -Tsvg -o shapes/pingpongnet.svg bin/pingpongnet.gv
 ```
 
 ```shell
@@ -140,7 +140,7 @@ go run . up pingpongnet
 
 ```shell
 go run . draw pingpong1seednet
-dot -Tsvg -O bin/pingpong1seednet.gv
+dot -Tsvg -o shapes/pingpong1seednet.svg bin/pingpong1seednet.gv
 ```
 
 ```shell
@@ -157,7 +157,7 @@ in a deadlock.
 
 ```shell
 go run . draw badnet
-dot -Tsvg -O bin/badnet.gv
+dot -Tsvg -o shapes/badnet.svg bin/badnet.gv
 ```
 
 ```shell
@@ -170,7 +170,7 @@ go run . up badnet
 
 ```shell
 go run . draw loop1seednet
-dot -Tsvg -O bin/loop1seednet.gv
+dot -Tsvg -o shapes/loop1seednet.svg bin/loop1seednet.gv
 ```
 
 ```shell
@@ -183,9 +183,27 @@ go run . up loop1seednet
 
 ```shell
 go run . draw pingpong2seednet
-dot -Tsvg -O bin/pingpong2seednet.gv
+dot -Tsvg -o shapes/pingpong2seednet.svg bin/pingpong2seednet.gv
 ```
 
 ```shell
 go run . up pingpong2seednet
+```
+
+## Distributor Networks
+
+### Infinite Single Seed One Way Distributor Network
+
+This configuration illustrates a simple arrangement where the seed node distributes events among its connected nodes.
+
+![](shapes/distributornet.svg)
+
+
+```shell
+go run . draw distributornet
+dot -Tsvg -o shapes/distributornet.svg bin/distributornet.gv
+```
+
+```shell
+go run . up distributornet
 ```

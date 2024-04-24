@@ -3,8 +3,9 @@ package glow
 type NodeOpt func(*nodeOpts)
 
 type nodeOpts struct {
-	keyFunc func() string
-	key     string
+	keyFunc     func() string
+	key         string
+	distributor bool
 }
 
 var defaultNodeOpts = nodeOpts{}
@@ -26,5 +27,11 @@ func KeyFunc(k func() string) NodeOpt {
 func Key(k string) NodeOpt {
 	return func(s *nodeOpts) {
 		s.key = k
+	}
+}
+
+func Distributor() NodeOpt {
+	return func(s *nodeOpts) {
+		s.distributor = true
 	}
 }

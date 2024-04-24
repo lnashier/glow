@@ -6,24 +6,49 @@ import (
 )
 
 const dotTmpl = `strict digraph {
-    {{ range $n := .Nodes -}}
-        "{{ $n }}";
+    node [shape=ellipse]
+
+	{{ range $n := .Nodes -}}
+        "{{ $n }}" [style="{{ prop "style" $n }}", fillcolor="{{ prop "color" $n }}"];
     {{ end -}}
     {{ range .Links -}}
-        "{{ .X }}" -> "{{ .Y }}";
+        "{{ from . }}" -> "{{ to . }}";
     {{ end }}
 }`
 
 // DOT describes the Network.
 func DOT(n *Network) ([]byte, error) {
-	return generate(n, dotTmpl)
-}
+	t := template.New("tmpl")
+	t.Funcs(template.FuncMap{
+		"prop": func(prop string, k string) string {
+			node, _ := n.Node(k)
+			egress := n.Egress(k)
 
-func generate(n *Network, tmpl string) ([]byte, error) {
-	t, err := template.New("tmpl").Parse(tmpl)
+			// node with egress and distributor mode set
+			if len(egress) > 0 && node.distributor {
+				if prop == "color" {
+					return "lightyellow"
+				}
+				if prop == "style" {
+					return "filled"
+				}
+			}
+
+			return ""
+		},
+		"from": func(l *Link) string {
+			return l.x
+		},
+		"to": func(l *Link) string {
+			return l.y
+		},
+	})
+
+	_, err := t.Parse(dotTmpl)
 	if err != nil {
 		return nil, err
 	}
+
 	var tpl bytes.Buffer
 	if err := t.Execute(&tpl, n); err != nil {
 		return nil, err
