@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"examples/badnet"
 	"examples/distributornet"
 	"examples/fan1seednet"
 	"examples/fandistributsnet"
@@ -12,6 +11,7 @@ import (
 	"examples/onewaynet"
 	"examples/pingpong1seednet"
 	"examples/pingpong2seednet"
+	"examples/pingponginfiniteseednet"
 	"examples/pingpongnet"
 	"examples/selfloop1seednet"
 	"examples/selfloopnet"
@@ -56,8 +56,8 @@ func main() {
 
 func newNet(name string) (*glow.Network, func()) {
 	switch name {
-	case "badnet":
-		return badnet.Network(), badnet.Run
+	case "pingponginfiniteseednet":
+		return pingponginfiniteseednet.Network(), pingponginfiniteseednet.Run
 	case "distributornet":
 		return distributornet.Network(), distributornet.Run
 	case "fan1seednet":

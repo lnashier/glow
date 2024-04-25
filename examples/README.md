@@ -134,8 +134,9 @@ go run . up selfloopnet
 
 ### Once Single Seed One Node Self Loop Network
 
-A single seed node initiates the flow of information within the network. Another node, acting as a processor, handles
-incoming data and redirects it back to itself, thus establishing a continuous loop within the network.
+This configuration effectively addresses the issue of "indefinite wait" by introducing a single seed node to kickstart
+the flow of information throughout the network. Additionally, another node, serving as a processor, manages incoming
+data and channels it back to itself, creating a perpetual loop within the network.
 
 ![](shapes/selfloop1seednet.svg)
 
@@ -183,15 +184,15 @@ This configuration may seem straightforward initially, but it encounters a hurdl
 continues to emit more events, the communication could eventually, based on link channel size, grind to a halt resulting
 in a deadlock.
 
-![](shapes/badnet.svg)
+![](shapes/pingponginfiniteseednet.svg)
 
 ```shell
-go run . draw badnet
-dot -Tsvg -o shapes/badnet.svg bin/badnet.gv
+go run . draw pingponginfiniteseednet
+dot -Tsvg -o shapes/pingponginfiniteseednet.svg bin/pingponginfiniteseednet.gv
 ```
 
 ```shell
-go run . up badnet
+go run . up pingponginfiniteseednet
 ```
 
 ### Once Single Seed Multi Nodes Loop Network (Once Seeded Multi Nodes Ping-Pong Network)
