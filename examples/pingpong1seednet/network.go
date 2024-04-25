@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/lnashier/glow"
+	"github.com/lnashier/goarc"
 	xtime "github.com/lnashier/goarc/x/time"
 	"strconv"
 	"time"
@@ -15,6 +16,11 @@ var node1InCounts []string
 var node1OutCounts []string
 var node2InCounts []string
 var node2OutCounts []string
+
+func Run() {
+	goarc.Up(Network())
+	PrintResults()
+}
 
 func Network() *glow.Network {
 	nodeCount := -1
@@ -69,18 +75,18 @@ func Network() *glow.Network {
 		panic(err)
 	}
 
-	size := 0
+	// size = sum (seeds by each seed-node) - length of the loop
+	// size = 1 - 1 = 0
 
-	err = n.AddLink(node0, node1, size)
+	err = n.AddLink(node0, node1)
 	if err != nil {
 		panic(err)
 	}
-
-	err = n.AddLink(node1, node2, size)
+	err = n.AddLink(node1, node2)
 	if err != nil {
 		panic(err)
 	}
-	err = n.AddLink(node2, node1, size)
+	err = n.AddLink(node2, node1)
 	if err != nil {
 		panic(err)
 	}
@@ -89,16 +95,10 @@ func Network() *glow.Network {
 }
 
 func PrintResults() {
-	fmt.Printf("node0InCounts %d\n", len(node0InCounts))
-	fmt.Println(node0InCounts)
-	fmt.Printf("node0OutCounts %d\n", len(node0OutCounts))
-	fmt.Println(node0OutCounts)
-	fmt.Printf("node1InCounts %d\n", len(node1InCounts))
-	fmt.Println(node1InCounts)
-	fmt.Printf("node1OutCounts %d\n", len(node1OutCounts))
-	fmt.Println(node1OutCounts)
-	fmt.Printf("node2InCounts %d\n", len(node2InCounts))
-	fmt.Println(node2InCounts)
-	fmt.Printf("node2OutCounts %d\n", len(node2OutCounts))
-	fmt.Println(node2OutCounts)
+	fmt.Printf("node0InCounts = %v (%d)\n", node0InCounts, len(node0InCounts))
+	fmt.Printf("node0OutCounts = %v (%d)\n", node0OutCounts, len(node0OutCounts))
+	fmt.Printf("node1InCounts = %v (%d)\n", node1InCounts, len(node1InCounts))
+	fmt.Printf("node1OutCounts = %v (%d)\n", node1OutCounts, len(node1OutCounts))
+	fmt.Printf("node2InCounts = %v (%d)\n", node2InCounts, len(node2InCounts))
+	fmt.Printf("node2OutCounts = %v (%d)\n", node2OutCounts, len(node2OutCounts))
 }

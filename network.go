@@ -19,6 +19,7 @@ var (
 	ErrNodeIsConnected   = errors.New("node is connected")
 	ErrEmptyNetwork      = errors.New("network is empty")
 	ErrSeedingDone       = errors.New("seeding is done")
+	ErrNodeGoingAway     = errors.New("node is going away")
 	ErrIsolatedNodeFound = errors.New("isolated node found")
 )
 
@@ -42,50 +43,54 @@ type Link struct {
 	ch chan []byte
 }
 
+type session struct {
+	mu     *sync.RWMutex
+	ctx    context.Context
+	cancel func()
+}
+
 // Network represents nodes and their links.
 type Network struct {
-	ctx     context.Context
-	cancel  func()
-	log     func(format string, a ...any)
-	mu      *sync.RWMutex
-	nodes   map[string]*Node            // stores all nodes
-	ingress map[string]map[string]*Link // stores all ingress links for all nodes.
-	egress  map[string]map[string]*Link // stores all egress links for all nodes.
+	mu                  *sync.RWMutex
+	session             *session
+	log                 func(format string, a ...any)
+	nodes               map[string]*Node            // stores all nodes
+	ingress             map[string]map[string]*Link // stores all ingress links for all nodes.
+	egress              map[string]map[string]*Link // stores all egress links for all nodes.
+	stopGracetime       time.Duration
+	ignoreIsolatedNodes bool
 }
 
 // New creates a new [Network].
-// Provided [Key] function is used to get unique keys for the nodes.
 func New(opt ...NetworkOpt) *Network {
 	opts := defaultNetworkOpts
 	opts.apply(opt)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	if opts.stopGracetime > 0 {
-		cancel1 := cancel
-		cancel = func() {
-			time.Sleep(opts.stopGracetime)
-			cancel1()
-		}
-	}
-
 	return &Network{
-		ctx:    ctx,
-		cancel: cancel,
-		mu:     &sync.RWMutex{},
+		mu: &sync.RWMutex{},
+		session: &session{
+			mu: &sync.RWMutex{},
+		},
 		log: func(format string, a ...any) {
 			if opts.verbose {
 				fmt.Println(fmt.Sprintf("[%s] %s", time.Now().Format("2006-01-02 15:04:05.000"), fmt.Sprintf(format, a...)))
 			}
 		},
-		nodes:   make(map[string]*Node),
-		ingress: make(map[string]map[string]*Link),
-		egress:  make(map[string]map[string]*Link),
+		nodes:               make(map[string]*Node),
+		ingress:             make(map[string]map[string]*Link),
+		egress:              make(map[string]map[string]*Link),
+		ignoreIsolatedNodes: opts.ignoreIsolatedNodes,
+		stopGracetime:       opts.stopGracetime,
 	}
 }
 
 // AddNode adds a new Node in the network.
-// Node key is retrieved from the provided [Key] function.
+// Node key is retrieved from the provided [Key] function if not given.
 func (n *Network) AddNode(node NodeFunc, opt ...NodeOpt) (string, error) {
+	// check if session is in progress
+	n.session.mu.RLock()
+	defer n.session.mu.RUnlock()
+
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
@@ -129,6 +134,10 @@ func (n *Network) Node(k string) (*Node, error) {
 // RemoveNode removes a node with provided key.
 // A node can't be removed if it is connected/linked to any other node in the network.
 func (n *Network) RemoveNode(k string) error {
+	// check if session is in progress
+	n.session.mu.RLock()
+	defer n.session.mu.RUnlock()
+
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
@@ -198,8 +207,8 @@ func (n *Network) Termini() []string {
 }
 
 // AddLink connects from node and to nodes.
-// Once Link is made, nodes are said to be communicated over Link channel.
-func (n *Network) AddLink(from, to string, size int) error {
+// Once Link is made, nodes are said to be communicated over the Link channel.
+func (n *Network) AddLink(from, to string, opt ...LinkOpt) error {
 	if _, err := n.Link(from, to); !errors.Is(err, ErrLinkNotFound) {
 		return ErrLinkAlreadyExists
 	}
@@ -213,13 +222,20 @@ func (n *Network) AddLink(from, to string, size int) error {
 		return err
 	}
 
+	// check if session is in progress
+	n.session.mu.RLock()
+	defer n.session.mu.RUnlock()
+
 	n.mu.Lock()
 	defer n.mu.Unlock()
+
+	opts := defaultLinkOpts
+	opts.apply(opt)
 
 	var ch chan []byte
 
 	if xNode.distributor {
-		// Check if there exists another egress for node-x to get existing channel
+		// if there exists another egress for node-x then get existing channel
 		if xEgress := n.egress[xNode.key]; len(xEgress) > 0 {
 			for _, xLink := range xEgress {
 				ch = xLink.ch
@@ -229,7 +245,7 @@ func (n *Network) AddLink(from, to string, size int) error {
 	}
 
 	if ch == nil {
-		ch = make(chan []byte, size)
+		ch = make(chan []byte, opts.size)
 	}
 
 	link := &Link{
@@ -253,6 +269,26 @@ func (n *Network) AddLink(from, to string, size int) error {
 	return nil
 }
 
+// RemoveLink disconnects "from" node and "to" node.
+func (n *Network) RemoveLink(from, to string) error {
+	_, err := n.Link(from, to)
+	if err != nil {
+		return err
+	}
+
+	// check if session is in progress
+	n.session.mu.RLock()
+	defer n.session.mu.RUnlock()
+
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	delete(n.ingress[to], from)
+	delete(n.egress[from], to)
+
+	return nil
+}
+
 // Link returns connection between from and to nodes if any.
 func (n *Network) Link(from, to string) (*Link, error) {
 	n.mu.RLock()
@@ -269,23 +305,6 @@ func (n *Network) Link(from, to string) (*Link, error) {
 	}
 
 	return link, nil
-}
-
-// RemoveLink disconnects from node and to node.
-// Underlying communication channel is closed.
-func (n *Network) RemoveLink(from, to string) error {
-	_, err := n.Link(from, to)
-	if err != nil {
-		return err
-	}
-
-	n.mu.Lock()
-	defer n.mu.Unlock()
-
-	delete(n.ingress[to], from)
-	delete(n.egress[from], to)
-
-	return nil
 }
 
 // Links returns all the links in the Network.
@@ -341,8 +360,20 @@ func (n *Network) Egress(k string) []*Link {
 
 // Start runs the Network.
 func (n *Network) Start() error {
+	n.session.mu.Lock()
 	n.log("Start enter")
+	defer n.session.mu.Unlock()
 	defer n.log("Start exit")
+
+	n.session.ctx, n.session.cancel = context.WithCancel(context.Background())
+	if n.stopGracetime > 0 {
+		cancel1 := n.session.cancel
+		n.session.cancel = func() {
+			n.log("Network going down in %s", n.stopGracetime)
+			time.Sleep(n.stopGracetime)
+			cancel1()
+		}
+	}
 
 	keys := n.Nodes()
 	if len(keys) == 0 {
@@ -351,7 +382,7 @@ func (n *Network) Start() error {
 
 	n.log("Nodes: %v", keys)
 
-	wg, netctx := errgroup.WithContext(n.ctx)
+	wg, netctx := errgroup.WithContext(n.session.ctx)
 
 	for _, key := range keys {
 		wg.Go(func() error {
@@ -364,6 +395,9 @@ func (n *Network) Start() error {
 			egress := n.Egress(key)
 
 			if len(ingress) == 0 && len(egress) == 0 {
+				if n.ignoreIsolatedNodes {
+					return nil
+				}
 				return ErrIsolatedNodeFound
 			}
 
@@ -389,7 +423,7 @@ func (n *Network) Start() error {
 					default:
 						nodeData, nodeErr := node.f(netctx, nil)
 						if nodeErr != nil {
-							if errors.Is(nodeErr, ErrSeedingDone) {
+							if errors.Is(nodeErr, ErrSeedingDone) || errors.Is(nodeErr, ErrNodeGoingAway) {
 								n.log("Seed(%s) %v", key, nodeErr)
 								return nil
 							}
@@ -432,14 +466,18 @@ func (n *Network) Start() error {
 						for {
 							select {
 							case <-nodectx.Done():
-								n.log("Node(%s/%s) From(%s) node-ctx done", key, ingressLink.x, ingressLink.y)
+								n.log("Node(%s/%s) node-ctx done for Node(%s)", key, ingressLink.y, ingressLink.x)
 								return nil
 							case inData := <-ingressLink.ch:
 								n.log("Node(%s/%s) Received Data(%s) From(%s)", key, ingressLink.y, string(inData), ingressLink.x)
 
 								nodeData, nodeErr := node.f(nodectx, inData)
 								if nodeErr != nil {
-									n.log("Node(%s/%s) Err: %v", key, ingressLink.y, nodeErr)
+									if errors.Is(nodeErr, ErrNodeGoingAway) {
+										n.log("Node(%s/%s) %v for Node(%s)", key, ingressLink.y, nodeErr, ingressLink.x)
+										return nil
+									}
+									n.log("Node(%s/%s) Err: %v for Node(%s)", key, ingressLink.y, nodeErr, ingressLink.x)
 									return nodeErr
 								}
 
@@ -485,14 +523,18 @@ func (n *Network) Start() error {
 						for {
 							select {
 							case <-nodectx.Done():
-								n.log("Terminus(%s/%s) From(%s) node-ctx done", key, ingressLink.x, ingressLink.y)
+								n.log("Terminus(%s/%s) node-ctx done for Node(%s)", key, ingressLink.y, ingressLink.x)
 								return nil
 							case inData := <-ingressLink.ch:
 								n.log("Terminus(%s/%s) Received Data(%s) From(%s)\n", key, ingressLink.y, string(inData), ingressLink.x)
 
 								_, nodeErr := node.f(nodectx, inData)
 								if nodeErr != nil {
-									n.log("Terminus(%s/%s) Err: %v\n", key, ingressLink.y, nodeErr)
+									if errors.Is(nodeErr, ErrNodeGoingAway) {
+										n.log("Terminus(%s/%s) %v for Node(%s)", key, ingressLink.y, nodeErr, ingressLink.x)
+										return nil
+									}
+									n.log("Terminus(%s/%s) Err: %v for Node(%s)\n", key, ingressLink.y, nodeErr, ingressLink.x)
 									return nodeErr
 								}
 							}
@@ -517,6 +559,8 @@ func (n *Network) Start() error {
 func (n *Network) Stop() error {
 	n.log("Stop enter")
 	defer n.log("Stop exit")
-	n.cancel()
+	if n.session.cancel != nil {
+		n.session.cancel()
+	}
 	return nil
 }

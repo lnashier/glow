@@ -7,13 +7,13 @@ The `glow` is an idiomatic computational network framework.
 
 ## Examples
 
-[Examples](examples/README.md)
+[Examples](examples/)
 
 ## Wish List
 
 - [x] Seed Node
 - [x] Terminal Node
-- [x] Multiple ingress / egress links
 - [x] Broadcaster Node
 - [x] Distributor Node
-- [ ] Signaling
+- [ ] ACK 
+- [ ] Network modifications while network is up (e.g. Remove link)

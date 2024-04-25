@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/lnashier/glow"
+	"github.com/lnashier/goarc"
 	xtime "github.com/lnashier/goarc/x/time"
 	"strconv"
 	"time"
@@ -17,6 +18,11 @@ var node2InCounts []string
 var node2OutCounts []string
 var node3InCounts []string
 var node3OutCounts []string
+
+func Run() {
+	goarc.Up(Network())
+	PrintResults()
+}
 
 func Network() *glow.Network {
 	nodeCount := -1
@@ -84,22 +90,20 @@ func Network() *glow.Network {
 		panic(err)
 	}
 
-	size := 0
-
-	err = n.AddLink(node0, node1, size)
+	err = n.AddLink(node0, node1)
 	if err != nil {
 		panic(err)
 	}
 
-	err = n.AddLink(node1, node2, size)
+	err = n.AddLink(node1, node2)
 	if err != nil {
 		panic(err)
 	}
-	err = n.AddLink(node2, node3, size)
+	err = n.AddLink(node2, node3)
 	if err != nil {
 		panic(err)
 	}
-	err = n.AddLink(node3, node1, size)
+	err = n.AddLink(node3, node1)
 	if err != nil {
 		panic(err)
 	}

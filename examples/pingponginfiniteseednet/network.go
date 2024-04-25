@@ -1,12 +1,11 @@
-package badnet
+package pingponginfiniteseednet
 
 import (
 	"context"
 	"fmt"
 	"github.com/lnashier/glow"
-	xtime "github.com/lnashier/goarc/x/time"
+	"github.com/lnashier/goarc"
 	"strconv"
-	"time"
 )
 
 var node0InCounts []string
@@ -15,6 +14,11 @@ var node1InCounts []string
 var node1OutCounts []string
 var node2InCounts []string
 var node2OutCounts []string
+
+func Run() {
+	goarc.Up(Network())
+	PrintResults()
+}
 
 func Network() *glow.Network {
 	nodeCount := -1
@@ -27,7 +31,8 @@ func Network() *glow.Network {
 
 	node0count := 0
 	node0, err := n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
-		xtime.SleepWithContext(ctx, time.Second*5)
+		// un/comment to play around, change time
+		//xtime.SleepWithContext(ctx, time.Second*5)
 		node0count++
 
 		node0InCounts = append(node0InCounts, "")
@@ -42,7 +47,8 @@ func Network() *glow.Network {
 	}
 
 	node1, err := n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
-		// xtime.SleepWithContext(ctx, time.Second*5)
+		// un/comment to play around, change time
+		//xtime.SleepWithContext(ctx, time.Second*1)
 
 		node1InCounts = append(node1InCounts, string(in))
 		defer func() {
@@ -56,7 +62,8 @@ func Network() *glow.Network {
 	}
 
 	node2, err := n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
-		xtime.SleepWithContext(ctx, time.Second*1)
+		// un/comment to play around, change time
+		//xtime.SleepWithContext(ctx, time.Second*1)
 
 		node2InCounts = append(node2InCounts, string(in))
 		defer func() {
@@ -69,17 +76,22 @@ func Network() *glow.Network {
 		panic(err)
 	}
 
-	size := 0
+	err = n.AddLink(node0, node1)
+	if err != nil {
+		panic(err)
+	}
 
-	err = n.AddLink(node0, node1, size)
+	// size = count of seeds produced by each seed-node - the length of the loop
+	// size = inf - 1 = inf
+	// one of the link needs to have proper size
+	// Depending on how often seed-node is producing seeds, eventually system will come to halt
+
+	//err = n.AddLink(node1, node2, glow.Size(10))
+	err = n.AddLink(node1, node2)
 	if err != nil {
 		panic(err)
 	}
-	err = n.AddLink(node1, node2, size)
-	if err != nil {
-		panic(err)
-	}
-	err = n.AddLink(node2, node1, size)
+	err = n.AddLink(node2, node1)
 	if err != nil {
 		panic(err)
 	}
@@ -88,18 +100,10 @@ func Network() *glow.Network {
 }
 
 func PrintResults() {
-	fmt.Printf("node0InCounts %d\n", len(node0InCounts))
-	fmt.Println(node0InCounts)
-	fmt.Printf("node0OutCounts %d\n", len(node0OutCounts))
-	fmt.Println(node0OutCounts)
-
-	fmt.Printf("node1InCounts %d\n", len(node1InCounts))
-	fmt.Println(node1InCounts)
-	fmt.Printf("node1OutCounts %d\n", len(node1OutCounts))
-	fmt.Println(node1OutCounts)
-
-	fmt.Printf("node2InCounts %d\n", len(node2InCounts))
-	fmt.Println(node2InCounts)
-	fmt.Printf("node2OutCounts %d\n", len(node2OutCounts))
-	fmt.Println(node2OutCounts)
+	fmt.Printf("node0InCounts = %v (%d)\n", node0InCounts, len(node0InCounts))
+	fmt.Printf("node0OutCounts = %v (%d)\n", node0OutCounts, len(node0OutCounts))
+	fmt.Printf("node1InCounts = %v (%d)\n", node1InCounts, len(node1InCounts))
+	fmt.Printf("node1OutCounts = %v (%d)\n", node1OutCounts, len(node1OutCounts))
+	fmt.Printf("node2InCounts = %v (%d)\n", node2InCounts, len(node2InCounts))
+	fmt.Printf("node2OutCounts = %v (%d)\n", node2OutCounts, len(node2OutCounts))
 }

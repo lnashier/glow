@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/lnashier/glow"
+	"github.com/lnashier/goarc"
 	xtime "github.com/lnashier/goarc/x/time"
 	"strconv"
 	"sync"
@@ -14,16 +15,24 @@ var seedCounts sync.Map
 var nodeInCounts sync.Map
 var nodeOutCounts sync.Map
 
+func Run() {
+	goarc.Up(Network())
+	PrintResults()
+}
+
 func Network() *glow.Network {
 	n := glow.New(glow.Verbose())
 
 	Sub1Network(n)
 	Sub2Network(n)
 
-	err := n.AddLink("node-102", "node-201", 0)
-	if err != nil {
-		panic(err)
-	}
+	// Uncomment to connect two networks
+	/*
+		err := n.AddLink("node-102", "node-201")
+		if err != nil {
+			panic(err)
+		}
+	*/
 
 	return n
 }
@@ -95,14 +104,12 @@ func Sub1Network(n *glow.Network) {
 		panic(err)
 	}
 
-	size := 0
-
-	err = n.AddLink(node0, node1, size)
+	err = n.AddLink(node0, node1)
 	if err != nil {
 		panic(err)
 	}
 
-	err = n.AddLink(node1, node2, size)
+	err = n.AddLink(node1, node2)
 	if err != nil {
 		panic(err)
 	}
@@ -157,9 +164,7 @@ func Sub2Network(n *glow.Network) {
 		panic(err)
 	}
 
-	size := 0
-
-	err = n.AddLink(node0, node1, size)
+	err = n.AddLink(node0, node1)
 	if err != nil {
 		panic(err)
 	}
@@ -167,14 +172,14 @@ func Sub2Network(n *glow.Network) {
 
 func PrintResults() {
 	seedCounts.Range(func(k, v any) bool {
-		fmt.Printf("seedCounts[seed-%d] = %d\n", k.(int)+1, v)
+		fmt.Printf("seedCounts[node-%d] Latest = %d\n", k.(int)+1, v)
 		return true
 	})
 
 	nodeInCounts.Range(func(k, v any) bool {
-		fmt.Printf("nodeInCounts [node-%d] = %v\n", k.(int)+1, v)
+		fmt.Printf("nodeInCounts [node-%d] = %v (%d)\n", k.(int)+1, v, len(v.([]string)))
 		nc, _ := nodeOutCounts.Load(k)
-		fmt.Printf("nodeOutCounts[node-%d] = %v\n", k.(int)+1, nc)
+		fmt.Printf("nodeOutCounts[node-%d] = %v (%d)\n", k.(int)+1, nc, len(nc.([]string)))
 		return true
 	})
 }

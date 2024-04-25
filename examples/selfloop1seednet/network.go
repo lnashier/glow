@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/lnashier/glow"
+	"github.com/lnashier/goarc"
 	xtime "github.com/lnashier/goarc/x/time"
 	"strconv"
 	"sync"
@@ -14,73 +15,75 @@ var seedCounts sync.Map
 var nodeInCounts sync.Map
 var nodeOutCounts sync.Map
 
-func Network() *glow.Network {
-	nodeCount := 0
-	keygen := func() string {
-		nodeCount++
-		return fmt.Sprintf("node-%d", nodeCount)
-	}
+func Run() {
+	goarc.Up(Network())
+	PrintResults()
+}
 
+func Network() *glow.Network {
 	n := glow.New(glow.Verbose())
 
-	for i := range 1 {
-		seedCounts.Store(i+1, 0)
-	}
+	node1ID := "node-1"
+	seedCounts.Store(node1ID, 0)
+	nodeInCounts.Store(node1ID, []string{})
+	nodeOutCounts.Store(node1ID, []string{})
 
-	for i := range 2 {
-		nodeInCounts.Store(i+1, []string{})
-		nodeOutCounts.Store(i+1, []string{})
-	}
+	_, err := n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
+		num, _ := seedCounts.Load(node1ID)
 
-	node0, err := n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
-		xtime.SleepWithContext(ctx, time.Second*5)
-
-		num, _ := seedCounts.Load(1)
-
-		if num.(int) > 2 {
+		if num.(int) > 0 {
 			return nil, glow.ErrSeedingDone
 		}
 
-		seedCounts.Store(1, num.(int)+1)
+		xtime.SleepWithContext(ctx, time.Second*5)
 
-		inCounts, _ := nodeInCounts.Load(1)
-		nodeInCounts.Store(1, append(inCounts.([]string), string(in)))
+		seedCounts.Store(node1ID, num.(int)+1)
+
+		inCounts, _ := nodeInCounts.Load(node1ID)
+		nodeInCounts.Store(node1ID, append(inCounts.([]string), string(in)))
 
 		defer func() {
-			outCounts, _ := nodeOutCounts.Load(1)
-			nodeOutCounts.Store(1, append(outCounts.([]string), strconv.Itoa(num.(int)+1)))
+			outCounts, _ := nodeOutCounts.Load(node1ID)
+			nodeOutCounts.Store(node1ID, append(outCounts.([]string), strconv.Itoa(num.(int)+1)))
 		}()
 
 		return []byte(fmt.Sprintf("%d", num.(int)+1)), nil
-	}, glow.KeyFunc(keygen))
+	}, glow.Key(node1ID))
 	if err != nil {
 		panic(err)
 	}
 
-	node1, err := n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
+	node2ID := "node-2"
+	nodeInCounts.Store(node2ID, []string{})
+	nodeOutCounts.Store(node2ID, []string{})
+
+	_, err = n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
+		// Let's make this node take a nap for a bit, or else it's gonna go all tight loop on us
+		// and fill up the log window faster than you can say "Oops!"
 		xtime.SleepWithContext(ctx, time.Second*1)
 
-		inCounts, _ := nodeInCounts.Load(2)
-		nodeInCounts.Store(2, append(inCounts.([]string), string(in)))
+		inCounts, _ := nodeInCounts.Load(node2ID)
+		nodeInCounts.Store(node2ID, append(inCounts.([]string), string(in)))
 		defer func() {
-			outCounts, _ := nodeOutCounts.Load(2)
-			nodeOutCounts.Store(2, append(outCounts.([]string), string(in)))
+			outCounts, _ := nodeOutCounts.Load(node2ID)
+			nodeOutCounts.Store(node2ID, append(outCounts.([]string), string(in)))
 		}()
 		return in, nil
-	}, glow.KeyFunc(keygen))
+	}, glow.Key(node2ID))
 	if err != nil {
 		panic(err)
 	}
 
-	// >= seeds - 1
-	size := 3
+	// Connect nodes
 
-	err = n.AddLink(node0, node1, size)
+	err = n.AddLink(node1ID, node2ID)
 	if err != nil {
 		panic(err)
 	}
 
-	err = n.AddLink(node1, node1, size)
+	// size = count of seeds produced by each seed-node - the length of the loop
+	// size = 1 - 0 = 1
+	err = n.AddLink(node2ID, node2ID, glow.Size(1))
 	if err != nil {
 		panic(err)
 	}
@@ -90,14 +93,14 @@ func Network() *glow.Network {
 
 func PrintResults() {
 	seedCounts.Range(func(k, v any) bool {
-		fmt.Printf("seedCounts[seed-%d] = %d\n", k, v)
+		fmt.Printf("seedCounts[seed(%s)] = %d\n", k, v)
 		return true
 	})
 
 	nodeInCounts.Range(func(k, v any) bool {
-		fmt.Printf("nodeInCounts [node-%d] = %v\n", k.(int), v)
+		fmt.Printf("nodeInCounts [%s] = %v (%d)\n", k, v, len(v.([]string)))
 		nc, _ := nodeOutCounts.Load(k)
-		fmt.Printf("nodeOutCounts[node-%d] = %v\n", k.(int), nc)
+		fmt.Printf("nodeOutCounts[%s] = %v (%d)\n", k, nc, len(nc.([]string)))
 		return true
 	})
 }

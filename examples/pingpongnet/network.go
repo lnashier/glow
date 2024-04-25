@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/lnashier/glow"
+	"github.com/lnashier/goarc"
 	xtime "github.com/lnashier/goarc/x/time"
 	"sync"
 	"time"
@@ -12,6 +13,11 @@ import (
 var seedCounts sync.Map
 var nodeInCounts sync.Map
 var nodeOutCounts sync.Map
+
+func Run() {
+	goarc.Up(Network())
+	PrintResults()
+}
 
 func Network() *glow.Network {
 	nodeCount := 0
@@ -61,14 +67,12 @@ func Network() *glow.Network {
 		panic(err)
 	}
 
-	size := 1
-
-	err = n.AddLink(node1, node2, size)
+	err = n.AddLink(node1, node2, glow.Size(1))
 	if err != nil {
 		panic(err)
 	}
 
-	err = n.AddLink(node2, node1, size)
+	err = n.AddLink(node2, node1, glow.Size(1))
 	if err != nil {
 		panic(err)
 	}
@@ -83,9 +87,9 @@ func PrintResults() {
 	})
 
 	nodeInCounts.Range(func(k, v any) bool {
-		fmt.Printf("nodeInCounts [node-%d] = %v\n", k.(int)+1, v)
+		fmt.Printf("nodeInCounts [node-%d] = %v (%d)\n", k.(int)+1, v, len(v.([]string)))
 		nc, _ := nodeOutCounts.Load(k)
-		fmt.Printf("nodeOutCounts[node-%d] = %v\n", k.(int)+1, nc)
+		fmt.Printf("nodeOutCounts[node-%d] = %v (%d)\n", k.(int)+1, nc, len(nc.([]string)))
 		return true
 	})
 }

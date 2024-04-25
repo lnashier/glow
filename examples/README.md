@@ -35,7 +35,7 @@ dot -Tsvg -o shapes/onewaynet.svg bin/onewaynet.gv
 go run . up onewaynet
 ```
 
-### Single Seed Multi Nodes Broadcasting Network
+### Single Seed Multi Nodes Broadcast Network
 
 This configuration closely resembles the basic setup, with information flowing from the seed node through each
 intermediate node until it reaches the network's end. However, in this variation, after processing, intermediate nodes
@@ -52,9 +52,24 @@ dot -Tsvg -o shapes/fan1seednet.svg bin/fan1seednet.gv
 go run . up fan1seednet
 ```
 
-### Fan In Fan Out Network
+### Infinite Single Seed One Way Distribution Network
 
-This represents a classic fan-in fan-out network configuration. Here, a summarization node gathers all events in one
+This configuration illustrates a simple arrangement where the seed node distributes events among its connected nodes.
+
+![](shapes/distributornet.svg)
+
+```shell
+go run . draw distributornet
+dot -Tsvg -o shapes/distributornet.svg bin/distributornet.gv
+```
+
+```shell
+go run . up distributornet
+```
+
+### Fan In Fan Out Broadcast Network
+
+This represents a fan-in fan-out broadcast network configuration. Here, a summarization node gathers all events in one
 location and then disperses them, broadcasting incoming events to subsequent nodes in the chain.
 
 ![](shapes/fannet.svg)
@@ -68,10 +83,25 @@ dot -Tsvg -o shapes/fannet.svg bin/fannet.gv
 go run . up fannet
 ```
 
-### Double Seed Funnel Network
+### Fan In Fan Out Distribution Network
 
-In this setup, there are two seed nodes that serve as the initial sources of information. These nodes funnel data
-towards a central point where they converge.
+This is a fan-in fan-out distribution network setup. In this configuration, an aggregator node centralizes all events
+before distributing incoming events to subsequent nodes in the chain.
+
+![](shapes/fandistributsnet.svg)
+
+```shell
+go run . draw fandistributsnet
+dot -Tsvg -o shapes/fandistributsnet.svg bin/fandistributsnet.gv
+```
+
+```shell
+go run . up fandistributsnet
+```
+
+### Multiple Networks
+
+In this setup, there are two subnetworks working independently.
 
 ![](shapes/subwaynet.svg)
 
@@ -85,22 +115,6 @@ go run . up subwaynet
 ```
 
 ## Loop Networks
-
-### Once Single Seed One Node Self Loop Network
-
-A single seed node initiates the flow of information within the network. Another node, acting as a processor, handles
-incoming data and redirects it back to itself, thus establishing a continuous loop within the network.
-
-![](shapes/selfloop1seednet.svg)
-
-```shell
-go run . draw selfloop1seednet
-dot -Tsvg -o shapes/selfloop1seednet.svg bin/selfloop1seednet.gv
-```
-
-```shell
-go run . up selfloop1seednet
-```
 
 ### One Node Self Loop Network
 
@@ -116,6 +130,23 @@ dot -Tsvg -o shapes/selfloopnet.svg bin/selfloopnet.gv
 
 ```shell
 go run . up selfloopnet
+```
+
+### Once Single Seed One Node Self Loop Network
+
+This configuration effectively addresses the issue of "indefinite wait" by introducing a single seed node to kickstart
+the flow of information throughout the network. Additionally, another node, serving as a processor, manages incoming
+data and channels it back to itself, creating a perpetual loop within the network.
+
+![](shapes/selfloop1seednet.svg)
+
+```shell
+go run . draw selfloop1seednet
+dot -Tsvg -o shapes/selfloop1seednet.svg bin/selfloop1seednet.gv
+```
+
+```shell
+go run . up selfloop1seednet
 ```
 
 ### Two Nodes Loop Network (Two Nodes Ping-Pong Network)
@@ -153,15 +184,15 @@ This configuration may seem straightforward initially, but it encounters a hurdl
 continues to emit more events, the communication could eventually, based on link channel size, grind to a halt resulting
 in a deadlock.
 
-![](shapes/badnet.svg)
+![](shapes/pingponginfiniteseednet.svg)
 
 ```shell
-go run . draw badnet
-dot -Tsvg -o shapes/badnet.svg bin/badnet.gv
+go run . draw pingponginfiniteseednet
+dot -Tsvg -o shapes/pingponginfiniteseednet.svg bin/pingponginfiniteseednet.gv
 ```
 
 ```shell
-go run . up badnet
+go run . up pingponginfiniteseednet
 ```
 
 ### Once Single Seed Multi Nodes Loop Network (Once Seeded Multi Nodes Ping-Pong Network)
@@ -190,20 +221,3 @@ dot -Tsvg -o shapes/pingpong2seednet.svg bin/pingpong2seednet.gv
 go run . up pingpong2seednet
 ```
 
-## Distributor Networks
-
-### Infinite Single Seed One Way Distributor Network
-
-This configuration illustrates a simple arrangement where the seed node distributes events among its connected nodes.
-
-![](shapes/distributornet.svg)
-
-
-```shell
-go run . draw distributornet
-dot -Tsvg -o shapes/distributornet.svg bin/distributornet.gv
-```
-
-```shell
-go run . up distributornet
-```
