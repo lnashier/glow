@@ -87,9 +87,9 @@ func PrintResults() {
 	})
 
 	nodeInCounts.Range(func(k, v any) bool {
-		fmt.Printf("nodeInCounts [node-%d] = %v\n", k.(int)+1, v)
+		fmt.Printf("nodeInCounts [node-%d] = %v (%d)\n", k.(int)+1, v, len(v.([]string)))
 		nc, _ := nodeOutCounts.Load(k)
-		fmt.Printf("nodeOutCounts[node-%d] = %v\n", k.(int)+1, nc)
+		fmt.Printf("nodeOutCounts[node-%d] = %v (%d)\n", k.(int)+1, nc, len(nc.([]string)))
 		return true
 	})
 }

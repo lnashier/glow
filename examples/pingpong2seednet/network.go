@@ -38,6 +38,7 @@ func Network() *glow.Network {
 		if node0Count > 0 {
 			return nil, glow.ErrSeedingDone
 		}
+
 		xtime.SleepWithContext(ctx, time.Second*5)
 		node0Count++
 
@@ -57,6 +58,7 @@ func Network() *glow.Network {
 		if node00count > 10 {
 			return nil, glow.ErrSeedingDone
 		}
+
 		xtime.SleepWithContext(ctx, time.Second*5)
 		node00count++
 
@@ -97,24 +99,24 @@ func Network() *glow.Network {
 		panic(err)
 	}
 
-	// size = seeds - 1
-	size := 1
-
-	err = n.AddLink(node0, node1, glow.Size(size))
+	err = n.AddLink(node0, node1)
+	if err != nil {
+		panic(err)
+	}
+	err = n.AddLink(node00, node1)
 	if err != nil {
 		panic(err)
 	}
 
-	err = n.AddLink(node00, node1, glow.Size(size))
-	if err != nil {
-		panic(err)
-	}
+	// size = count of seeds produced by each seed-node - the length of the loop
+	// size = 1 + 1 - 1 = 1
+	// one of the link needs to have proper size
 
-	err = n.AddLink(node1, node2, glow.Size(size))
+	err = n.AddLink(node1, node2, glow.Size(1))
 	if err != nil {
 		panic(err)
 	}
-	err = n.AddLink(node2, node1, glow.Size(size))
+	err = n.AddLink(node2, node1)
 	if err != nil {
 		panic(err)
 	}
@@ -123,23 +125,12 @@ func Network() *glow.Network {
 }
 
 func PrintResults() {
-	fmt.Printf("node0InCounts %d\n", len(node0InCounts))
-	fmt.Println(node0InCounts)
-	fmt.Printf("node0OutCounts %d\n", len(node0OutCounts))
-	fmt.Println(node0OutCounts)
-
-	fmt.Printf("node00InCounts %d\n", len(node00InCounts))
-	fmt.Println(node0InCounts)
-	fmt.Printf("node00OutCounts %d\n", len(node00OutCounts))
-	fmt.Println(node00OutCounts)
-
-	fmt.Printf("node1InCounts %d\n", len(node1InCounts))
-	fmt.Println(node1InCounts)
-	fmt.Printf("node1OutCounts %d\n", len(node1OutCounts))
-	fmt.Println(node1OutCounts)
-
-	fmt.Printf("node2InCounts %d\n", len(node2InCounts))
-	fmt.Println(node2InCounts)
-	fmt.Printf("node2OutCounts %d\n", len(node2OutCounts))
-	fmt.Println(node2OutCounts)
+	fmt.Printf("node0InCounts = %v (%d)\n", node0InCounts, len(node0InCounts))
+	fmt.Printf("node0OutCounts = %v (%d)\n", node0OutCounts, len(node0OutCounts))
+	fmt.Printf("node00InCounts = %v (%d)\n", node00InCounts, len(node00InCounts))
+	fmt.Printf("node00OutCounts = %v (%d)\n", node00OutCounts, len(node00OutCounts))
+	fmt.Printf("node1InCounts = %v (%d)\n", node1InCounts, len(node1InCounts))
+	fmt.Printf("node1OutCounts = %v (%d)\n", node1OutCounts, len(node1OutCounts))
+	fmt.Printf("node2InCounts = %v (%d)\n", node2InCounts, len(node2InCounts))
+	fmt.Printf("node2OutCounts = %v (%d)\n", node2OutCounts, len(node2OutCounts))
 }
