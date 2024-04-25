@@ -7,7 +7,7 @@ The `glow` is an idiomatic computational network framework.
 
 ## Examples
 
-[Examples](examples/README.md)
+[Examples](examples/)
 
 ## Wish List
 
