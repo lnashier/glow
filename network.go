@@ -369,6 +369,7 @@ func (n *Network) Start() error {
 	if n.stopGracetime > 0 {
 		cancel1 := n.session.cancel
 		n.session.cancel = func() {
+			n.log("Network going down in %s", n.stopGracetime)
 			time.Sleep(n.stopGracetime)
 			cancel1()
 		}
