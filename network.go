@@ -555,7 +555,9 @@ func (n *Network) Start() error {
 	return wg.Wait()
 }
 
-// Stop signals the Network to stop all the communications.
+// Stop signals the Network to cease all communications.
+// If a stop grace period is set, communications will terminate
+// gracefully after that period.
 func (n *Network) Stop() error {
 	n.log("Stop enter")
 	defer n.log("Stop exit")
