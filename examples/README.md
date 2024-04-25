@@ -99,10 +99,9 @@ dot -Tsvg -o shapes/fandistributsnet.svg bin/fandistributsnet.gv
 go run . up fandistributsnet
 ```
 
-### Double Seed Funnel Network
+### Multiple Networks
 
-In this setup, there are two seed nodes that serve as the initial sources of information. These nodes funnel data
-towards a central point where they converge.
+In this setup, there are two subnetworks working independently.
 
 ![](shapes/subwaynet.svg)
 
