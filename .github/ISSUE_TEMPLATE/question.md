@@ -5,4 +5,4 @@ labels: 'Type: Question'
 
 ---
 
-Please see the Examples in our main README.md before submitting your issue.
+Please see the Examples in the main README.md before submitting your issue.

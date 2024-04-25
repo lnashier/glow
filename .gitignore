@@ -9,6 +9,5 @@ vendor/
 go.work
 .idea/
 tmp/
-demo/
 bin/
 .vscode/

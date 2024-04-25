@@ -5,7 +5,7 @@ labels: 'Type: Bug'
 
 ---
 
-Please see the Examples in our main README.md, then answer the questions below before submitting your issue.
+Please see the Examples in the main README.md, then answer the questions below before submitting your issue.
 
 ### What version of glow are you using?
 

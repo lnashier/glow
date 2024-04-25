@@ -1,6 +1,6 @@
 module examples
 
-go 1.22.0
+go 1.22.2
 
 replace github.com/lnashier/glow => ../../glow
 

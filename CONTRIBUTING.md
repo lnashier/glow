@@ -1,6 +1,6 @@
 # Contributing to Glow
 
-Thank you for considering contributing to Glow! Your contributions help improve the project for everyone. Below you'll
+Thank you for considering contributing to `glow`! Your contributions help improve the project for everyone. Below you'll
 find guidelines on how to get started.
 
 ## Issues and Proposals
@@ -17,7 +17,7 @@ that there is no duplication of effort.
 
 When contributing code, please follow these guidelines:
 
-1. **Fork the Repository**: If you haven't already, fork the Glow repository on GitHub to your own account.
+1. **Fork the Repository**: If you haven't already, fork the `glow` repository on GitHub to your own account.
 
 2. **Branch Strategy**: Create a new branch for your changes. This keeps your changes isolated from the main codebase
    and makes it easier to review and merge your contributions.
@@ -34,7 +34,7 @@ When contributing code, please follow these guidelines:
 6. **Commit Messages**: Write clear and descriptive commit messages that explain the purpose of each change. This helps
    other contributors understand your contributions and facilitates future maintenance.
 
-7. **Pull Request**: Once you've made your changes, open a pull request against the main branch of the Glow repository.
+7. **Pull Request**: Once you've made your changes, open a pull request against the main branch of the `glow` repository.
    Provide a detailed description of your changes and any related issues.
 
 8. **Review and Feedback**: Your pull request will be reviewed by project maintainers. Be responsive to any feedback or
@@ -44,7 +44,7 @@ When contributing code, please follow these guidelines:
 9. **Merge**: Once your pull request has been approved and passes any required tests, it will be merged into the main
    codebase. Congratulations on your contribution!
 
-Thank you for taking the time to contribute to Glow. Your contributions help make the project better for everyone. If
+Thank you for taking the time to contribute to `glow`. Your contributions help make the project better for everyone. If
 you have any questions or need assistance with contributing, don't hesitate to reach out to the project maintainers.
 
 Happy coding!
