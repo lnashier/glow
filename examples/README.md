@@ -117,22 +117,6 @@ go run . up subwaynet
 
 ## Loop Networks
 
-### Once Single Seed One Node Self Loop Network
-
-A single seed node initiates the flow of information within the network. Another node, acting as a processor, handles
-incoming data and redirects it back to itself, thus establishing a continuous loop within the network.
-
-![](shapes/selfloop1seednet.svg)
-
-```shell
-go run . draw selfloop1seednet
-dot -Tsvg -o shapes/selfloop1seednet.svg bin/selfloop1seednet.gv
-```
-
-```shell
-go run . up selfloop1seednet
-```
-
 ### One Node Self Loop Network
 
 This setup features a self-loop with a single node in the network. However, in the absence of any events within the
@@ -147,6 +131,22 @@ dot -Tsvg -o shapes/selfloopnet.svg bin/selfloopnet.gv
 
 ```shell
 go run . up selfloopnet
+```
+
+### Once Single Seed One Node Self Loop Network
+
+A single seed node initiates the flow of information within the network. Another node, acting as a processor, handles
+incoming data and redirects it back to itself, thus establishing a continuous loop within the network.
+
+![](shapes/selfloop1seednet.svg)
+
+```shell
+go run . draw selfloop1seednet
+dot -Tsvg -o shapes/selfloop1seednet.svg bin/selfloop1seednet.gv
+```
+
+```shell
+go run . up selfloop1seednet
 ```
 
 ### Two Nodes Loop Network (Two Nodes Ping-Pong Network)

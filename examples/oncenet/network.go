@@ -70,9 +70,7 @@ func Network() *glow.Network {
 		panic(err)
 	}
 
-	size := 0
-
-	err = n.AddLink(node1ID, node2ID, glow.Size(size))
+	err = n.AddLink(node1ID, node2ID)
 	if err != nil {
 		panic(err)
 	}

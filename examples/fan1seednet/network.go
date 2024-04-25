@@ -136,34 +136,32 @@ func Network() *glow.Network {
 		panic(err)
 	}
 
-	size := 0
-
-	err = n.AddLink(node0, node1, glow.Size(size))
+	err = n.AddLink(node0, node1)
 	if err != nil {
 		panic(err)
 	}
 
-	err = n.AddLink(node0, node2, glow.Size(size))
+	err = n.AddLink(node0, node2)
 	if err != nil {
 		panic(err)
 	}
 
-	err = n.AddLink(node1, node3, glow.Size(size))
+	err = n.AddLink(node1, node3)
 	if err != nil {
 		panic(err)
 	}
 
-	err = n.AddLink(node1, node4, glow.Size(size))
+	err = n.AddLink(node1, node4)
 	if err != nil {
 		panic(err)
 	}
 
-	err = n.AddLink(node2, node5, glow.Size(size))
+	err = n.AddLink(node2, node5)
 	if err != nil {
 		panic(err)
 	}
 
-	err = n.AddLink(node2, node6, glow.Size(size))
+	err = n.AddLink(node2, node6)
 	if err != nil {
 		panic(err)
 	}
