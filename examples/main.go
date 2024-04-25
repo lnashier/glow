@@ -45,13 +45,8 @@ func main() {
 			})
 
 			svc.Register("up", func(ctx context.Context, args []string) error {
-				net, fn := newNet(args[0])
-				if net != nil {
-					goarc.Up(net)
-					if fn != nil {
-						fn()
-					}
-				}
+				_, up := newNet(args[0])
+				up()
 				return nil
 			})
 			return nil
@@ -62,33 +57,33 @@ func main() {
 func newNet(name string) (*glow.Network, func()) {
 	switch name {
 	case "badnet":
-		return badnet.Network(), badnet.PrintResults
+		return badnet.Network(), badnet.Run
 	case "distributornet":
-		return distributornet.Network(), distributornet.PrintResults
+		return distributornet.Network(), distributornet.Run
 	case "fan1seednet":
-		return fan1seednet.Network(), fan1seednet.PrintResults
+		return fan1seednet.Network(), fan1seednet.Run
 	case "fandistributsnet":
-		return fandistributsnet.Network(), fandistributsnet.PrintResults
+		return fandistributsnet.Network(), fandistributsnet.Run
 	case "fannet":
-		return fannet.Network(), fannet.PrintResults
+		return fannet.Network(), fannet.Run
 	case "loop1seednet":
-		return loop1seednet.Network(), loop1seednet.PrintResults
+		return loop1seednet.Network(), loop1seednet.Run
 	case "oncenet":
-		return oncenet.Network(), oncenet.PrintResults
+		return oncenet.Network(), oncenet.Run
 	case "onewaynet":
-		return onewaynet.Network(), onewaynet.PrintResults
+		return onewaynet.Network(), onewaynet.Run
 	case "pingpong1seednet":
-		return pingpong1seednet.Network(), pingpong1seednet.PrintResults
+		return pingpong1seednet.Network(), pingpong1seednet.Run
 	case "pingpong2seednet":
-		return pingpong2seednet.Network(), pingpong2seednet.PrintResults
+		return pingpong2seednet.Network(), pingpong2seednet.Run
 	case "pingpongnet":
-		return pingpongnet.Network(), pingpongnet.PrintResults
+		return pingpongnet.Network(), pingpongnet.Run
 	case "selfloop1seednet":
-		return selfloop1seednet.Network(), selfloop1seednet.PrintResults
+		return selfloop1seednet.Network(), selfloop1seednet.Run
 	case "selfloopnet":
-		return selfloopnet.Network(), selfloopnet.PrintResults
+		return selfloopnet.Network(), selfloopnet.Run
 	case "subwaynet":
-		return subwaynet.Network(), subwaynet.PrintResults
+		return subwaynet.Network(), subwaynet.Run
 	default:
 		return nil, nil
 	}

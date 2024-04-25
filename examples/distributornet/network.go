@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/lnashier/glow"
+	"github.com/lnashier/goarc"
 	xtime "github.com/lnashier/goarc/x/time"
+	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -13,6 +15,15 @@ import (
 var seedCounts sync.Map
 var nodeInCounts sync.Map
 var nodeOutCounts sync.Map
+
+func Run() {
+	wg := &sync.WaitGroup{}
+	net := Network()
+	monitor(wg, net)
+	goarc.Up(net)
+	PrintResults()
+	wg.Wait()
+}
 
 func Network() *glow.Network {
 	n := glow.New(glow.Verbose(), glow.IgnoreIsolatedNodes())
@@ -92,4 +103,50 @@ func PrintResults() {
 		fmt.Printf("nodeOutCounts[%s] = %v\n", k, nc)
 		return true
 	})
+}
+
+func monitor(wg *sync.WaitGroup, n *glow.Network) {
+	nodeAID := "node-1"
+	nodeBID := "node-2"
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		fmt.Printf("Preparing to remove link between %s and %s\n", nodeAID, nodeBID)
+
+		xtime.SleepWithContext(context.Background(), time.Duration(10)*time.Second)
+
+		fmt.Printf("Stopping network to remove link between %s and %s\n", nodeAID, nodeBID)
+		err := n.Stop()
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("Stopped network to remove link between %s and %s\n", nodeAID, nodeBID)
+
+		PrintResults()
+
+		fmt.Printf("Removing link between %s and %s\n", nodeAID, nodeBID)
+		err = n.RemoveLink(nodeAID, nodeBID)
+		if err != nil {
+			fmt.Printf("Error %v while removing link between %s and %s\n", err, nodeAID, nodeBID)
+			return
+		}
+		fmt.Printf("Removed link between %s and %s\n", nodeAID, nodeBID)
+
+		fmt.Printf("Saving network after removing link between %s and %s\n", nodeAID, nodeBID)
+		data, err := glow.DOT(n)
+		if err != nil {
+			panic(err)
+		}
+		err = os.WriteFile("bin/modified-distributornet.gv", data, os.FileMode(0755))
+		if err != nil {
+			panic(err)
+		}
+		fmt.Printf("Saved network after removing link between %s and %s\n", nodeAID, nodeBID)
+
+		fmt.Printf("Starting network after removing link between %s and %s\n", nodeAID, nodeBID)
+		goarc.Up(n)
+
+		PrintResults()
+	}()
 }
