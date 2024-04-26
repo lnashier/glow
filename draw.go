@@ -8,8 +8,8 @@ import (
 const dotTmpl = `strict digraph {
     node [shape=ellipse]
 
-	{{ range $n := .Nodes -}}
-        "{{ $n }}" [style="{{ prop "style" $n }}", fillcolor="{{ prop "color" $n }}"];
+	{{ range .Nodes -}}
+        "{{ . }}" [style="{{ prop "style" . }}", fillcolor="{{ prop "color" . }}"];
     {{ end -}}
     {{ range .Links -}}
         "{{ from . }}" -> "{{ to . }}";
