@@ -8,6 +8,7 @@ type networkOpts struct {
 	verbose             bool
 	stopGracetime       time.Duration
 	ignoreIsolatedNodes bool
+	preventCycles       bool
 }
 
 var defaultNetworkOpts = networkOpts{}
@@ -33,5 +34,11 @@ func IgnoreIsolatedNodes() NetworkOpt {
 func StopGracetime(t time.Duration) NetworkOpt {
 	return func(s *networkOpts) {
 		s.stopGracetime = t
+	}
+}
+
+func PreventCycles() NetworkOpt {
+	return func(s *networkOpts) {
+		s.preventCycles = true
 	}
 }

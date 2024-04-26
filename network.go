@@ -59,6 +59,7 @@ type Network struct {
 	egress              map[string]map[string]*Link // stores all egress links for all nodes.
 	stopGracetime       time.Duration
 	ignoreIsolatedNodes bool
+	preventCycles       bool
 }
 
 // New creates a new [Network].
@@ -81,6 +82,7 @@ func New(opt ...NetworkOpt) *Network {
 		egress:              make(map[string]map[string]*Link),
 		ignoreIsolatedNodes: opts.ignoreIsolatedNodes,
 		stopGracetime:       opts.stopGracetime,
+		preventCycles:       opts.preventCycles,
 	}
 }
 
@@ -209,7 +211,7 @@ func (n *Network) Termini() []string {
 // AddLink connects from node and to nodes.
 // Once Link is made, nodes are said to be communicated over the Link channel.
 func (n *Network) AddLink(from, to string, opt ...LinkOpt) error {
-	if _, err := n.Link(from, to); !errors.Is(err, ErrLinkNotFound) {
+	if link, _ := n.Link(from, to); link != nil {
 		return ErrLinkAlreadyExists
 	}
 
