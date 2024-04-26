@@ -10,45 +10,6 @@ import (
 	"time"
 )
 
-var (
-	ErrNodeNotFound      = errors.New("node not found")
-	ErrBadNodeKey        = errors.New("bad node key")
-	ErrNodeAlreadyExists = errors.New("node already exists")
-	ErrLinkNotFound      = errors.New("link not found")
-	ErrLinkAlreadyExists = errors.New("link already exists")
-	ErrNodeIsConnected   = errors.New("node is connected")
-	ErrEmptyNetwork      = errors.New("network is empty")
-	ErrSeedingDone       = errors.New("seeding is done")
-	ErrNodeGoingAway     = errors.New("node is going away")
-	ErrIsolatedNodeFound = errors.New("isolated node found")
-)
-
-// NodeFunc is the function responsible for processing incoming data on the Node.
-type NodeFunc func(context.Context, []byte) ([]byte, error)
-
-// Node defines a node in the [Network].
-// Node is said to be Seed node if it has only egress Links.
-// Node is said to be Terminus node if it has only ingress Links.
-type Node struct {
-	key         string
-	f           NodeFunc
-	distributor bool
-}
-
-// Link captures connection between two nodes.
-// Data flows from x to y over the [Link].
-type Link struct {
-	x  string
-	y  string
-	ch chan []byte
-}
-
-type session struct {
-	mu     *sync.RWMutex
-	ctx    context.Context
-	cancel func()
-}
-
 // Network represents nodes and their links.
 type Network struct {
 	mu                  *sync.RWMutex
@@ -60,6 +21,12 @@ type Network struct {
 	stopGracetime       time.Duration
 	ignoreIsolatedNodes bool
 	preventCycles       bool
+}
+
+type session struct {
+	mu     *sync.RWMutex
+	ctx    context.Context
+	cancel func()
 }
 
 // New creates a new [Network].
@@ -208,8 +175,8 @@ func (n *Network) Termini() []string {
 	return keys
 }
 
-// AddLink connects from node and to nodes.
-// Once Link is made, nodes are said to be communicated over the Link channel.
+// AddLink connects from-node to to-node.
+// Once Link is made, nodes are said to be communicating over the Link from -> to.
 func (n *Network) AddLink(from, to string, opt ...LinkOpt) error {
 	if link, _ := n.Link(from, to); link != nil {
 		return ErrLinkAlreadyExists
@@ -567,4 +534,45 @@ func (n *Network) Stop() error {
 		n.session.cancel()
 	}
 	return nil
+}
+
+type NetworkOpt func(*networkOpts)
+
+type networkOpts struct {
+	verbose             bool
+	stopGracetime       time.Duration
+	ignoreIsolatedNodes bool
+	preventCycles       bool
+}
+
+var defaultNetworkOpts = networkOpts{}
+
+func (s *networkOpts) apply(opts []NetworkOpt) {
+	for _, o := range opts {
+		o(s)
+	}
+}
+
+func Verbose() NetworkOpt {
+	return func(s *networkOpts) {
+		s.verbose = true
+	}
+}
+
+func IgnoreIsolatedNodes() NetworkOpt {
+	return func(s *networkOpts) {
+		s.ignoreIsolatedNodes = true
+	}
+}
+
+func StopGracetime(t time.Duration) NetworkOpt {
+	return func(s *networkOpts) {
+		s.stopGracetime = t
+	}
+}
+
+func PreventCycles() NetworkOpt {
+	return func(s *networkOpts) {
+		s.preventCycles = true
+	}
 }
