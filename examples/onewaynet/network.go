@@ -30,7 +30,7 @@ func Network() *glow.Network {
 		return fmt.Sprintf("node-%d", nodeCount)
 	}
 
-	n := glow.New(glow.Verbose())
+	n := glow.New(glow.Verbose(), glow.PreventCycles())
 
 	node0Count := 0
 	node0, err := n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
@@ -50,6 +50,8 @@ func Network() *glow.Network {
 	}
 
 	node1, err := n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
+		xtime.SleepWithContext(ctx, time.Second*5)
+
 		node1InCounts = append(node1InCounts, string(in))
 		defer func() {
 			node1OutCounts = append(node1OutCounts, string(in))
@@ -62,6 +64,8 @@ func Network() *glow.Network {
 	}
 
 	node2, err := n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
+		xtime.SleepWithContext(ctx, time.Second*5)
+
 		node2InCounts = append(node2InCounts, string(in))
 		defer func() {
 			node2OutCounts = append(node2OutCounts, string(in))

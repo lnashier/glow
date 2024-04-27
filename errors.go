@@ -13,4 +13,5 @@ var (
 	ErrSeedingDone       = errors.New("seeding is done")
 	ErrNodeGoingAway     = errors.New("node is going away")
 	ErrIsolatedNodeFound = errors.New("isolated node found")
+	ErrCyclesNotAllowed  = errors.New("cycles not allowed")
 )

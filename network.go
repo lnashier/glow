@@ -191,6 +191,10 @@ func (n *Network) AddLink(from, to string, opt ...LinkOpt) error {
 		return err
 	}
 
+	if n.preventCycles && n.checkCycle(from, to) {
+		return ErrCyclesNotAllowed
+	}
+
 	// check if session is in progress
 	n.session.mu.RLock()
 	defer n.session.mu.RUnlock()

@@ -27,7 +27,7 @@ func Network() *glow.Network {
 		return fmt.Sprintf("node-%d", nodeCount)
 	}
 
-	n := glow.New(glow.Verbose())
+	n := glow.New(glow.Verbose(), glow.PreventCycles())
 
 	for i := range 1 {
 		seedCounts.Store(i, i*100)

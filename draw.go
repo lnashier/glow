@@ -5,7 +5,7 @@ import (
 	"text/template"
 )
 
-const dotTmpl = `strict digraph {
+const tmpl = `strict digraph {
     node [shape=ellipse]
 
 	{{ range .Nodes -}}
@@ -44,13 +44,13 @@ func DOT(n *Network) ([]byte, error) {
 		},
 	})
 
-	_, err := t.Parse(dotTmpl)
+	_, err := t.Parse(tmpl)
 	if err != nil {
 		return nil, err
 	}
 
 	var tpl bytes.Buffer
-	if err := t.Execute(&tpl, n); err != nil {
+	if err = t.Execute(&tpl, n); err != nil {
 		return nil, err
 	}
 	return tpl.Bytes(), nil
