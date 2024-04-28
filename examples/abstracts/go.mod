@@ -2,7 +2,7 @@ module examples
 
 go 1.22.2
 
-replace github.com/lnashier/glow => ../../glow
+replace github.com/lnashier/glow => ../../../glow
 
 require (
 	github.com/lnashier/glow v0.0.0
