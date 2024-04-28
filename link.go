@@ -1,5 +1,13 @@
 package glow
 
+// Link captures connection between two nodes.
+// Data flows from x to y over the [Link].
+type Link struct {
+	x  string
+	y  string
+	ch chan []byte
+}
+
 type LinkOpt func(*linkOpts)
 
 type linkOpts struct {

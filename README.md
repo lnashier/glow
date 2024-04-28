@@ -17,7 +17,6 @@ The `glow` is an idiomatic computational network framework.
 - [x] Distributor Node
 - [x] Session (restart)
 - [ ] ACK
-- [ ] ~~Network modifications while network is up (e.g. Remove link)~~
+- [ ] ~~Network modifications while network is up (e.g. Remove link, Add Link)~~
 - [ ] Network integrity checks (e.g. Avoid cycles)
-- [ ] Statistics (count, time)
-- [ ] ~~Network/Graph traversal algorithms~~
+- [ ] Statistics (count, time, Most or least used path)
