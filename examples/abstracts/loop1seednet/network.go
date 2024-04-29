@@ -34,14 +34,13 @@ func Network() *glow.Network {
 	n := glow.New(glow.Verbose())
 
 	node0Count := 0
-	node0, err := n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
+	node0, err := n.AddNode(func(ctx context.Context, _ any) (any, error) {
 		if node0Count > 0 {
-			return in, glow.ErrSeedingDone
+			return nil, glow.ErrSeedingDone
 		}
-		xtime.SleepWithContext(ctx, time.Second*5)
+		xtime.SleepWithContext(ctx, time.Second*1)
 		node0Count++
 
-		node0InCounts = append(node0InCounts, string(in))
 		defer func() {
 			node0OutCounts = append(node0OutCounts, strconv.Itoa(node0Count))
 		}()
@@ -52,8 +51,9 @@ func Network() *glow.Network {
 		panic(err)
 	}
 
-	node1, err := n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
-		xtime.SleepWithContext(ctx, time.Second*5)
+	node1, err := n.AddNode(func(ctx context.Context, in1 any) (any, error) {
+		in := in1.([]byte)
+		xtime.SleepWithContext(ctx, time.Second*1)
 
 		node1InCounts = append(node1InCounts, string(in))
 		defer func() {
@@ -66,7 +66,8 @@ func Network() *glow.Network {
 		panic(err)
 	}
 
-	node2, err := n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
+	node2, err := n.AddNode(func(ctx context.Context, in1 any) (any, error) {
+		in := in1.([]byte)
 		node2InCounts = append(node2InCounts, string(in))
 		defer func() {
 			node2OutCounts = append(node2OutCounts, string(in))
@@ -78,7 +79,8 @@ func Network() *glow.Network {
 		panic(err)
 	}
 
-	node3, err := n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
+	node3, err := n.AddNode(func(ctx context.Context, in1 any) (any, error) {
+		in := in1.([]byte)
 		node3InCounts = append(node3InCounts, string(in))
 		defer func() {
 			node3OutCounts = append(node3OutCounts, string(in))

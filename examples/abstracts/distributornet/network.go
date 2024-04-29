@@ -7,7 +7,6 @@ import (
 	"github.com/lnashier/goarc"
 	xtime "github.com/lnashier/goarc/x/time"
 	"os"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -30,13 +29,14 @@ func Network() *glow.Network {
 
 	node1ID := "node-1"
 	seedCounts.Store(node1ID, 0)
-	nodeInCounts.Store(node1ID, []string{})
-	nodeOutCounts.Store(node1ID, []string{})
+	nodeInCounts.Store(node1ID, make([]int, 0))
+	nodeOutCounts.Store(node1ID, make([]int, 0))
 
-	n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
+	n.AddNode(func(ctx context.Context, _ any) (any, error) {
 		xtime.SleepWithContext(ctx, time.Duration(1)*time.Second)
 
-		num, _ := seedCounts.Load(node1ID)
+		num1, _ := seedCounts.Load(node1ID)
+		num := num1.(int)
 
 		/*
 			if num.(int) > 10 {
@@ -44,43 +44,42 @@ func Network() *glow.Network {
 			}
 		*/
 
-		seedCounts.Store(node1ID, num.(int)+1)
-
-		inCounts, _ := nodeInCounts.Load(node1ID)
-		nodeInCounts.Store(node1ID, append(inCounts.([]string), string(in)))
+		seedCounts.Store(node1ID, num+1)
 
 		defer func() {
 			outCounts, _ := nodeOutCounts.Load(node1ID)
-			nodeOutCounts.Store(node1ID, append(outCounts.([]string), strconv.Itoa(num.(int)+1)))
+			nodeOutCounts.Store(node1ID, append(outCounts.([]int), num+1))
 		}()
 
-		return []byte(fmt.Sprintf("%d", num.(int)+1)), nil
+		return num + 1, nil
 	}, glow.Key(node1ID), glow.Distributor())
 
 	node2ID := "node-2"
-	nodeInCounts.Store(node2ID, []string{})
-	nodeOutCounts.Store(node2ID, []string{})
+	nodeInCounts.Store(node2ID, make([]int, 0))
+	nodeOutCounts.Store(node2ID, make([]int, 0))
 
-	n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
+	n.AddNode(func(ctx context.Context, in1 any) (any, error) {
+		in := in1.(int)
 		inCounts, _ := nodeInCounts.Load(node2ID)
-		nodeInCounts.Store(node2ID, append(inCounts.([]string), string(in)))
+		nodeInCounts.Store(node2ID, append(inCounts.([]int), in))
 		defer func() {
 			outCounts, _ := nodeOutCounts.Load(node2ID)
-			nodeOutCounts.Store(node2ID, append(outCounts.([]string), string(in)))
+			nodeOutCounts.Store(node2ID, append(outCounts.([]int), in))
 		}()
 		return in, nil
 	}, glow.Key(node2ID))
 
 	node3ID := "node-3"
-	nodeInCounts.Store(node3ID, []string{})
-	nodeOutCounts.Store(node3ID, []string{})
+	nodeInCounts.Store(node3ID, make([]int, 0))
+	nodeOutCounts.Store(node3ID, make([]int, 0))
 
-	n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
+	n.AddNode(func(ctx context.Context, in1 any) (any, error) {
+		in := in1.(int)
 		inCounts, _ := nodeInCounts.Load(node3ID)
-		nodeInCounts.Store(node3ID, append(inCounts.([]string), string(in)))
+		nodeInCounts.Store(node3ID, append(inCounts.([]int), in))
 		defer func() {
 			outCounts, _ := nodeOutCounts.Load(node3ID)
-			nodeOutCounts.Store(node3ID, append(outCounts.([]string), string(in)))
+			nodeOutCounts.Store(node3ID, append(outCounts.([]int), in))
 		}()
 		return in, nil
 	}, glow.Key(node3ID))
@@ -98,9 +97,9 @@ func PrintResults() {
 	})
 
 	nodeInCounts.Range(func(k, v any) bool {
-		fmt.Printf("nodeInCounts [%s] = %v (%d)\n", k, v, len(v.([]string)))
+		fmt.Printf("nodeInCounts [%s] = %v (%d)\n", k, v, len(v.([]int)))
 		nc, _ := nodeOutCounts.Load(k)
-		fmt.Printf("nodeOutCounts[%s] = %v (%d)\n", k, nc, len(nc.([]string)))
+		fmt.Printf("nodeOutCounts[%s] = %v (%d)\n", k, nc, len(nc.([]int)))
 		return true
 	})
 }

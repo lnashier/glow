@@ -28,15 +28,12 @@ func Network() *glow.Network {
 	nodeInCounts.Store(node1ID, []string{})
 	nodeOutCounts.Store(node1ID, []string{})
 
-	seed := func(ctx context.Context, in []byte) ([]byte, error) {
+	seed := func(ctx context.Context, _ any) (any, error) {
 		xtime.SleepWithContext(ctx, time.Duration(1)*time.Second)
 
 		num, _ := seedCounts.Load(node1ID)
 
 		seedCounts.Store(node1ID, num.(int)+1)
-
-		inCounts, _ := nodeInCounts.Load(node1ID)
-		nodeInCounts.Store(node1ID, append(inCounts.([]string), string(in)))
 
 		defer func() {
 			outCounts, _ := nodeOutCounts.Load(node1ID)
@@ -48,13 +45,15 @@ func Network() *glow.Network {
 
 	seedingDone := false
 
-	_, err := n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
+	_, err := n.AddNode(func(ctx context.Context, in1 any) (any, error) {
 		if !seedingDone {
 			defer func() {
 				seedingDone = true
 			}()
-			return seed(ctx, in)
+			return seed(ctx, in1)
 		}
+
+		in := in1.([]byte)
 
 		xtime.SleepWithContext(ctx, time.Second*2)
 

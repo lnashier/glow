@@ -53,7 +53,7 @@ func Sub1Network(n *glow.Network) {
 		nodeOutCounts.Store(i+100, []string{})
 	}
 
-	node0, err := n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
+	node0, err := n.AddNode(func(ctx context.Context, _ any) (any, error) {
 		xtime.SleepWithContext(ctx, time.Second*10)
 
 		num, _ := seedCounts.Load(100)
@@ -63,9 +63,6 @@ func Sub1Network(n *glow.Network) {
 		}
 
 		seedCounts.Store(100, num.(int)+1)
-
-		inCounts, _ := nodeInCounts.Load(100)
-		nodeInCounts.Store(100, append(inCounts.([]string), string(in)))
 
 		defer func() {
 			outCounts, _ := nodeOutCounts.Load(100)
@@ -78,7 +75,8 @@ func Sub1Network(n *glow.Network) {
 		panic(err)
 	}
 
-	node1, err := n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
+	node1, err := n.AddNode(func(ctx context.Context, in1 any) (any, error) {
+		in := in1.([]byte)
 		inCounts, _ := nodeInCounts.Load(101)
 		nodeInCounts.Store(101, append(inCounts.([]string), string(in)))
 		defer func() {
@@ -91,7 +89,8 @@ func Sub1Network(n *glow.Network) {
 		panic(err)
 	}
 
-	node2, err := n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
+	node2, err := n.AddNode(func(ctx context.Context, in1 any) (any, error) {
+		in := in1.([]byte)
 		inCounts, _ := nodeInCounts.Load(102)
 		nodeInCounts.Store(102, append(inCounts.([]string), string(in)))
 		defer func() {
@@ -131,14 +130,11 @@ func Sub2Network(n *glow.Network) {
 		nodeOutCounts.Store(i+200, []string{})
 	}
 
-	node0, err := n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
+	node0, err := n.AddNode(func(ctx context.Context, _ any) (any, error) {
 		xtime.SleepWithContext(ctx, time.Second*5)
 
 		num, _ := seedCounts.Load(200)
 		seedCounts.Store(200, num.(int)+1)
-
-		inCounts, _ := nodeInCounts.Load(200)
-		nodeInCounts.Store(200, append(inCounts.([]string), string(in)))
 
 		defer func() {
 			outCounts, _ := nodeOutCounts.Load(200)
@@ -151,7 +147,8 @@ func Sub2Network(n *glow.Network) {
 		panic(err)
 	}
 
-	node1, err := n.AddNode(func(ctx context.Context, in []byte) ([]byte, error) {
+	node1, err := n.AddNode(func(ctx context.Context, in1 any) (any, error) {
+		in := in1.([]byte)
 		inCounts, _ := nodeInCounts.Load(201)
 		nodeInCounts.Store(201, append(inCounts.([]string), string(in)))
 		defer func() {
