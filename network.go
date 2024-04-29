@@ -205,7 +205,7 @@ func (n *Network) AddLink(from, to string, opt ...LinkOpt) error {
 	opts := defaultLinkOpts
 	opts.apply(opt)
 
-	var ch chan []byte
+	var ch chan any
 
 	if xNode.distributor {
 		// if there exists another egress for node-x then get existing channel
@@ -218,7 +218,7 @@ func (n *Network) AddLink(from, to string, opt ...LinkOpt) error {
 	}
 
 	if ch == nil {
-		ch = make(chan []byte, opts.size)
+		ch = make(chan any, opts.size)
 	}
 
 	link := &Link{
@@ -407,23 +407,23 @@ func (n *Network) Start() error {
 						if node.distributor {
 							// Get any egress link, they all share same channel
 							egressLink := egress[0]
-							n.log("Seed(%s/%s) Distributing Data(%s) To Nodes(%s)", key, egressLink.x, string(nodeData), egressYs)
+							n.log("Seed(%s/%s) Distributing Data(%v) To Nodes(%s)", key, egressLink.x, nodeData, egressYs)
 							select {
 							case <-netctx.Done():
-								n.log("Seed(%s/%s) net-ctx done while distributing Data(%s) To Nodes(%s)", key, egressLink.x, string(nodeData), egressYs)
+								n.log("Seed(%s/%s) net-ctx done while distributing Data(%v) To Nodes(%s)", key, egressLink.x, nodeData, egressYs)
 								return nil
 							case egressLink.ch <- nodeData:
-								n.log("Seed(%s/%s) Distributed Data(%s) To Nodes(%s)", key, egressLink.x, string(nodeData), egressYs)
+								n.log("Seed(%s/%s) Distributed Data(%v) To Nodes(%s)", key, egressLink.x, nodeData, egressYs)
 							}
 						} else {
 							for _, egressLink := range egress {
-								n.log("Seed(%s/%s) Sending Data(%s) To Node(%s)", key, egressLink.x, string(nodeData), egressLink.y)
+								n.log("Seed(%s/%s) Sending Data(%v) To Node(%s)", key, egressLink.x, nodeData, egressLink.y)
 								select {
 								case <-netctx.Done():
-									n.log("Seed(%s/%s) net-ctx done while sending Data(%s) To Node(%s)", key, egressLink.x, string(nodeData), egressLink.y)
+									n.log("Seed(%s/%s) net-ctx done while sending Data(%v) To Node(%s)", key, egressLink.x, nodeData, egressLink.y)
 									return nil
 								case egressLink.ch <- nodeData:
-									n.log("Seed(%s/%s) Sent Data(%s) To Node(%s)", key, egressLink.x, string(nodeData), egressLink.y)
+									n.log("Seed(%s/%s) Sent Data(%v) To Node(%s)", key, egressLink.x, nodeData, egressLink.y)
 								}
 							}
 						}
@@ -442,7 +442,7 @@ func (n *Network) Start() error {
 								n.log("Node(%s/%s) node-ctx done for Node(%s)", key, ingressLink.y, ingressLink.x)
 								return nil
 							case inData := <-ingressLink.ch:
-								n.log("Node(%s/%s) Received Data(%s) From(%s)", key, ingressLink.y, string(inData), ingressLink.x)
+								n.log("Node(%s/%s) Received Data(%v) From(%s)", key, ingressLink.y, inData, ingressLink.x)
 
 								nodeData, nodeErr := node.f(nodectx, inData)
 								if nodeErr != nil {
@@ -457,23 +457,23 @@ func (n *Network) Start() error {
 								if node.distributor {
 									// Get any egress link, they all share same channel
 									egressLink := egress[0]
-									n.log("Node(%s/%s) Distributing Data(%s) Of(%s) To Nodes(%s)", key, egressLink.x, string(nodeData), ingressLink.x, egressYs)
+									n.log("Node(%s/%s) Distributing Data(%v) Of(%s) To Nodes(%s)", key, egressLink.x, nodeData, ingressLink.x, egressYs)
 									select {
 									case <-nodectx.Done():
-										n.log("Node(%s/%s) node-ctx done while distributing Data(%s) Of(%s) To Nodes(%s)", key, egressLink.x, string(nodeData), ingressLink.x, egressYs)
+										n.log("Node(%s/%s) node-ctx done while distributing Data(%v) Of(%s) To Nodes(%s)", key, egressLink.x, nodeData, ingressLink.x, egressYs)
 										return nil
 									case egressLink.ch <- nodeData:
-										n.log("Node(%s/%s) Distributed Data(%s) Of(%s) To Nodes(%s)", key, egressLink.x, string(nodeData), ingressLink.y, egressYs)
+										n.log("Node(%s/%s) Distributed Data(%v) Of(%s) To Nodes(%s)", key, egressLink.x, nodeData, ingressLink.y, egressYs)
 									}
 								} else {
 									for _, egressLink := range egress {
-										n.log("Node(%s/%s) Sending Data(%s) Of(%s) To Node(%s)", key, egressLink.x, string(nodeData), ingressLink.x, egressLink.y)
+										n.log("Node(%s/%s) Sending Data(%v) Of(%s) To Node(%s)", key, egressLink.x, nodeData, ingressLink.x, egressLink.y)
 										select {
 										case <-nodectx.Done():
-											n.log("Node(%s/%s) node-ctx done while sending Data(%s) Of(%s) To Node(%s)", key, egressLink.x, string(nodeData), ingressLink.x, egressLink.y)
+											n.log("Node(%s/%s) node-ctx done while sending Data(%v) Of(%s) To Node(%s)", key, egressLink.x, nodeData, ingressLink.x, egressLink.y)
 											return nil
 										case egressLink.ch <- nodeData:
-											n.log("Node(%s/%s) Sent Data(%s) Of(%s) To Node(%s)", key, egressLink.x, string(nodeData), ingressLink.y, egressLink.y)
+											n.log("Node(%s/%s) Sent Data(%v) Of(%s) To Node(%s)", key, egressLink.x, nodeData, ingressLink.y, egressLink.y)
 										}
 									}
 								}
@@ -499,17 +499,18 @@ func (n *Network) Start() error {
 								n.log("Terminus(%s/%s) node-ctx done for Node(%s)", key, ingressLink.y, ingressLink.x)
 								return nil
 							case inData := <-ingressLink.ch:
-								n.log("Terminus(%s/%s) Received Data(%s) From(%s)\n", key, ingressLink.y, string(inData), ingressLink.x)
+								n.log("Terminus(%s/%s) Received Data(%v) From(%s)", key, ingressLink.y, inData, ingressLink.x)
 
-								_, nodeErr := node.f(nodectx, inData)
+								nodeData, nodeErr := node.f(nodectx, inData)
 								if nodeErr != nil {
 									if errors.Is(nodeErr, ErrNodeGoingAway) {
 										n.log("Terminus(%s/%s) %v for Node(%s)", key, ingressLink.y, nodeErr, ingressLink.x)
 										return nil
 									}
-									n.log("Terminus(%s/%s) Err: %v for Node(%s)\n", key, ingressLink.y, nodeErr, ingressLink.x)
+									n.log("Terminus(%s/%s) Err: %v for Node(%s)", key, ingressLink.y, nodeErr, ingressLink.x)
 									return nodeErr
 								}
+								n.log("Terminus(%s/%s) Data(%v) for Node(%s)", key, ingressLink.y, nodeData, ingressLink.x)
 							}
 						}
 					})

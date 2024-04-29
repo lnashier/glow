@@ -12,7 +12,7 @@ type Node struct {
 }
 
 // NodeFunc is the function responsible for processing incoming data on the Node.
-type NodeFunc func(context.Context, []byte) ([]byte, error)
+type NodeFunc func(context.Context, any) (any, error)
 
 type NodeOpt func(*nodeOpts)
 

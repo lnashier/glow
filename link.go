@@ -5,7 +5,7 @@ package glow
 type Link struct {
 	x  string
 	y  string
-	ch chan []byte
+	ch chan any
 }
 
 type LinkOpt func(*linkOpts)
