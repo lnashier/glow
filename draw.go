@@ -7,13 +7,12 @@ import (
 
 const tmpl = `strict digraph {
     node [shape=ellipse]
-
 	{{ range .Nodes -}}
         "{{ . }}" [style="{{ prop "style" . }}", fillcolor="{{ prop "color" . }}"];
     {{ end -}}
     {{ range .Links -}}
         "{{ from . }}" -> "{{ to . }}";
-    {{ end }}
+    {{- end }}
 }`
 
 // DOT describes the Network.

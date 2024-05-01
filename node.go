@@ -2,9 +2,10 @@ package glow
 
 import "context"
 
-// Node defines a node in the [Network].
-// Node is said to be Seed node if it has only egress Links.
-// Node is said to be Terminus node if it has only ingress Links.
+// Node represents a node within the [Network].
+// If a Node has only egress Links, it's a Seed node.
+// If a Node has only ingress Links, it's a Terminus node.
+// By default, a Node operates in broadcaster mode unless the distributor flag is set.
 type Node struct {
 	key         string
 	f           NodeFunc
