@@ -8,38 +8,73 @@ import (
 const tmpl = `strict digraph {
     node [shape=ellipse]
 	{{ range .Nodes -}}
-        "{{ . }}" [style="{{ prop "style" . }}", fillcolor="{{ prop "color" . }}"];
+        "{{ . }}"
+		[
+			style="{{ nodeProp "style" . }}",
+			fillcolor="{{ nodeProp "color" . }}"
+		];
     {{ end -}}
     {{ range .Links -}}
-        "{{ from . }}" -> "{{ to . }}";
-    {{- end }}
+        "{{ .From }}" -> "{{ .To }}"
+		[
+			label="  {{ .Tally }}",
+			color="{{ linkProp "color" . }}"
+			arrowhead="{{ linkProp "arrowhead" . }}"
+		];
+    {{ end }}
 }`
 
 // DOT describes the Network.
 func DOT(n *Network) ([]byte, error) {
 	t := template.New("tmpl")
 	t.Funcs(template.FuncMap{
-		"prop": func(prop string, k string) string {
+		"nodeProp": func(prop string, k string) any {
 			node, _ := n.Node(k)
 			egress := n.Egress(k)
 
-			// node with egress and distributor mode set
-			if len(egress) > 0 && node.distributor {
-				if prop == "color" {
+			switch prop {
+			case "color":
+				switch {
+				case len(egress) > 0 && node.distributor:
+					// node with egress and distributor mode set
 					return "lightyellow"
+				default:
+					return ""
 				}
-				if prop == "style" {
+			case "style":
+				switch {
+				case len(egress) > 0 && node.distributor:
+					// node with egress and distributor mode set
 					return "filled"
+				default:
+					return ""
 				}
+			default:
+				return ""
 			}
-
-			return ""
 		},
-		"from": func(l *Link) string {
-			return l.x
-		},
-		"to": func(l *Link) string {
-			return l.y
+		"linkProp": func(prop string, link *Link) any {
+			switch prop {
+			case "color":
+				switch {
+				case link.paused:
+					return "gray"
+				case link.deleted:
+					return "red"
+				default:
+					return "lightblue"
+				}
+			case "arrowhead":
+				switch {
+				case link.paused || link.deleted:
+					return "none"
+				default:
+					return "normal"
+				}
+			//case "penwidth":
+			default:
+				return ""
+			}
 		},
 	})
 

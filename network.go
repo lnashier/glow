@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"golang.org/x/sync/errgroup"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -29,6 +30,47 @@ type session struct {
 	cancel func()
 }
 
+type NetworkOpt func(*networkOpts)
+
+type networkOpts struct {
+	verbose             bool
+	stopGracetime       time.Duration
+	ignoreIsolatedNodes bool
+	preventCycles       bool
+}
+
+var defaultNetworkOpts = networkOpts{}
+
+func (s *networkOpts) apply(opts []NetworkOpt) {
+	for _, o := range opts {
+		o(s)
+	}
+}
+
+func Verbose() NetworkOpt {
+	return func(s *networkOpts) {
+		s.verbose = true
+	}
+}
+
+func IgnoreIsolatedNodes() NetworkOpt {
+	return func(s *networkOpts) {
+		s.ignoreIsolatedNodes = true
+	}
+}
+
+func StopGracetime(t time.Duration) NetworkOpt {
+	return func(s *networkOpts) {
+		s.stopGracetime = t
+	}
+}
+
+func PreventCycles() NetworkOpt {
+	return func(s *networkOpts) {
+		s.preventCycles = true
+	}
+}
+
 // New creates a new [Network].
 func New(opt ...NetworkOpt) *Network {
 	opts := defaultNetworkOpts
@@ -51,284 +93,6 @@ func New(opt ...NetworkOpt) *Network {
 		stopGracetime:       opts.stopGracetime,
 		preventCycles:       opts.preventCycles,
 	}
-}
-
-// AddNode adds a new Node in the network.
-// Node key is retrieved from the provided [Key] function if not given.
-func (n *Network) AddNode(node NodeFunc, opt ...NodeOpt) (string, error) {
-	// check if session is in progress
-	n.session.mu.RLock()
-	defer n.session.mu.RUnlock()
-
-	n.mu.Lock()
-	defer n.mu.Unlock()
-
-	opts := defaultNodeOpts
-	opts.apply(opt)
-
-	k := opts.key
-	if len(k) == 0 && opts.keyFunc != nil {
-		k = opts.keyFunc()
-	}
-	if len(k) == 0 {
-		return k, ErrBadNodeKey
-	}
-
-	if _, ok := n.nodes[k]; ok {
-		return k, ErrNodeAlreadyExists
-	}
-
-	n.nodes[k] = &Node{
-		key:         k,
-		distributor: opts.distributor,
-		f:           node,
-	}
-
-	return k, nil
-}
-
-// Node returns the node identified by the provided key.
-func (n *Network) Node(k string) (*Node, error) {
-	n.mu.RLock()
-	defer n.mu.RUnlock()
-
-	node, ok := n.nodes[k]
-	if !ok {
-		return node, ErrNodeNotFound
-	}
-
-	return node, nil
-}
-
-// RemoveNode removes a node with provided key.
-// A node can't be removed if it is connected/linked to any other node in the network.
-func (n *Network) RemoveNode(k string) error {
-	// check if session is in progress
-	n.session.mu.RLock()
-	defer n.session.mu.RUnlock()
-
-	n.mu.Lock()
-	defer n.mu.Unlock()
-
-	if _, ok := n.nodes[k]; !ok {
-		return ErrNodeNotFound
-	}
-	if len(n.ingress[k]) > 0 {
-		return ErrNodeIsConnected
-	}
-	if len(n.egress[k]) > 0 {
-		return ErrNodeIsConnected
-	}
-
-	delete(n.ingress, k) // just removing empty map
-	delete(n.egress, k)  // just removing empty map
-	delete(n.nodes, k)
-
-	return nil
-}
-
-// Nodes returns all the nodes as their unique keys in the Network.
-// Node should be called to get actual node.
-func (n *Network) Nodes() []string {
-	n.mu.RLock()
-	defer n.mu.RUnlock()
-
-	keys := make([]string, 0, len(n.nodes))
-	for k := range n.nodes {
-		keys = append(keys, k)
-	}
-
-	return keys
-}
-
-// Seeds returns all the nodes that have only egress links.
-// Node should be called to get actual node.
-func (n *Network) Seeds() []string {
-	n.mu.RLock()
-	defer n.mu.RUnlock()
-
-	var keys []string
-
-	for k := range n.nodes {
-		if len(n.Ingress(k)) == 0 && len(n.Egress(k)) > 0 {
-			keys = append(keys, k)
-		}
-	}
-
-	return keys
-}
-
-// Termini returns all the nodes that have only ingress links.
-// Node should be called to get actual node.
-func (n *Network) Termini() []string {
-	n.mu.RLock()
-	defer n.mu.RUnlock()
-
-	var keys []string
-
-	for k := range n.nodes {
-		if len(n.Ingress(k)) > 0 && len(n.Egress(k)) == 0 {
-			keys = append(keys, k)
-		}
-	}
-
-	return keys
-}
-
-// AddLink connects from-node to to-node.
-// Once Link is made, nodes are said to be communicating over the Link from -> to.
-func (n *Network) AddLink(from, to string, opt ...LinkOpt) error {
-	if link, _ := n.Link(from, to); link != nil {
-		return ErrLinkAlreadyExists
-	}
-
-	xNode, err := n.Node(from)
-	if err != nil {
-		return err
-	}
-	_, err = n.Node(to)
-	if err != nil {
-		return err
-	}
-
-	if n.preventCycles && n.checkCycle(from, to) {
-		return ErrCyclesNotAllowed
-	}
-
-	// check if session is in progress
-	n.session.mu.RLock()
-	defer n.session.mu.RUnlock()
-
-	n.mu.Lock()
-	defer n.mu.Unlock()
-
-	opts := defaultLinkOpts
-	opts.apply(opt)
-
-	var ch chan any
-
-	if xNode.distributor {
-		// if there exists another egress for node-x then get existing channel
-		if xEgress := n.egress[xNode.key]; len(xEgress) > 0 {
-			for _, xLink := range xEgress {
-				ch = xLink.ch
-				break
-			}
-		}
-	}
-
-	if ch == nil {
-		ch = make(chan any, opts.size)
-	}
-
-	link := &Link{
-		x:  from,
-		y:  to,
-		ch: ch,
-	}
-
-	if _, ok := n.egress[from]; !ok {
-		n.egress[from] = make(map[string]*Link)
-	}
-
-	n.egress[from][to] = link
-
-	if _, ok := n.ingress[to]; !ok {
-		n.ingress[to] = make(map[string]*Link)
-	}
-
-	n.ingress[to][from] = link
-
-	return nil
-}
-
-// RemoveLink disconnects "from" node and "to" node.
-func (n *Network) RemoveLink(from, to string) error {
-	_, err := n.Link(from, to)
-	if err != nil {
-		return err
-	}
-
-	// check if session is in progress
-	n.session.mu.RLock()
-	defer n.session.mu.RUnlock()
-
-	n.mu.Lock()
-	defer n.mu.Unlock()
-
-	delete(n.ingress[to], from)
-	delete(n.egress[from], to)
-
-	return nil
-}
-
-// Link returns connection between from and to nodes if any.
-func (n *Network) Link(from, to string) (*Link, error) {
-	n.mu.RLock()
-	defer n.mu.RUnlock()
-
-	outLinks, ok := n.egress[from]
-	if !ok {
-		return nil, ErrLinkNotFound
-	}
-
-	link, ok := outLinks[to]
-	if !ok {
-		return nil, ErrLinkNotFound
-	}
-
-	return link, nil
-}
-
-// Links returns all the links in the Network.
-func (n *Network) Links() []*Link {
-	n.mu.RLock()
-	defer n.mu.RUnlock()
-
-	var links []*Link
-	for _, outLinks := range n.egress {
-		for _, link := range outLinks {
-			links = append(links, link)
-		}
-	}
-
-	return links
-}
-
-// Ingress returns all the ingress links for the Node.
-func (n *Network) Ingress(k string) []*Link {
-	n.mu.RLock()
-	defer n.mu.RUnlock()
-
-	ingress := n.ingress[k]
-	if len(ingress) < 1 {
-		return nil
-	}
-
-	var links []*Link
-	for _, link := range ingress {
-		links = append(links, link)
-	}
-
-	return links
-}
-
-// Egress returns all the egress links for the Node.
-func (n *Network) Egress(k string) []*Link {
-	n.mu.RLock()
-	defer n.mu.RUnlock()
-
-	egress := n.egress[k]
-	if len(egress) < 1 {
-		return nil
-	}
-
-	var links []*Link
-	for _, link := range egress {
-		links = append(links, link)
-	}
-
-	return links
 }
 
 // Start runs the Network.
@@ -359,13 +123,22 @@ func (n *Network) Start() error {
 
 	for _, key := range keys {
 		wg.Go(func() error {
+			n.log("Node(%s) coming up", key)
+			defer n.log("Node(%s) going down", key)
+
 			node, err := n.Node(key)
 			if err != nil {
 				return err
 			}
 
-			ingress := n.Ingress(key)
-			egress := n.Egress(key)
+			ingress := slices.DeleteFunc(n.Ingress(key), func(l *Link) bool {
+				return l.paused || l.deleted
+			})
+			egress := slices.DeleteFunc(n.Egress(key), func(l *Link) bool {
+				return l.paused || l.deleted
+			})
+
+			n.log("Node(%s) ingress(%v) egress(%v)", key, ingress, egress)
 
 			if len(ingress) == 0 && len(egress) == 0 {
 				if n.ignoreIsolatedNodes {
@@ -373,8 +146,6 @@ func (n *Network) Start() error {
 				}
 				return ErrIsolatedNodeFound
 			}
-
-			n.log("Node(%s) ingress(%v) egress(%v)", key, ingress, egress)
 
 			egressYs := ""
 			if len(egress) > 0 && node.distributor {
@@ -442,6 +213,7 @@ func (n *Network) Start() error {
 								n.log("Node(%s/%s) node-ctx done for Node(%s)", key, ingressLink.y, ingressLink.x)
 								return nil
 							case inData := <-ingressLink.ch:
+								ingressLink.tally++
 								n.log("Node(%s/%s) Received Data(%v) From(%s)", key, ingressLink.y, inData, ingressLink.x)
 
 								nodeData, nodeErr := node.f(nodectx, inData)
@@ -482,8 +254,7 @@ func (n *Network) Start() error {
 					})
 				}
 
-				err = nodewg.Wait()
-				if err != nil {
+				if err = nodewg.Wait(); err != nil {
 					return err
 				}
 			case len(ingress) > 0 && len(egress) == 0:
@@ -499,6 +270,7 @@ func (n *Network) Start() error {
 								n.log("Terminus(%s/%s) node-ctx done for Node(%s)", key, ingressLink.y, ingressLink.x)
 								return nil
 							case inData := <-ingressLink.ch:
+								ingressLink.tally++
 								n.log("Terminus(%s/%s) Received Data(%v) From(%s)", key, ingressLink.y, inData, ingressLink.x)
 
 								nodeData, nodeErr := node.f(nodectx, inData)
@@ -516,8 +288,7 @@ func (n *Network) Start() error {
 					})
 				}
 
-				err = nodewg.Wait()
-				if err != nil {
+				if err = nodewg.Wait(); err != nil {
 					return err
 				}
 			}
@@ -530,8 +301,8 @@ func (n *Network) Start() error {
 }
 
 // Stop signals the Network to cease all communications.
-// If a stop grace period is set, communications will terminate
-// gracefully after that period.
+// If stop grace period is set, communications will terminate
+// after that period.
 func (n *Network) Stop() error {
 	n.log("Stop enter")
 	defer n.log("Stop exit")
@@ -541,43 +312,37 @@ func (n *Network) Stop() error {
 	return nil
 }
 
-type NetworkOpt func(*networkOpts)
+// Purge cleans up the Network by removing isolated Node(s) and removed Link(s).
+func (n *Network) Purge() error {
+	// check if session is in progress
+	n.session.mu.RLock()
+	defer n.session.mu.RUnlock()
 
-type networkOpts struct {
-	verbose             bool
-	stopGracetime       time.Duration
-	ignoreIsolatedNodes bool
-	preventCycles       bool
-}
+	keys := n.Nodes()
+	links := n.Links()
 
-var defaultNetworkOpts = networkOpts{}
+	n.mu.Lock()
+	defer n.mu.Unlock()
 
-func (s *networkOpts) apply(opts []NetworkOpt) {
-	for _, o := range opts {
-		o(s)
+	// clean up removed links
+	for _, link := range links {
+		if link.deleted {
+			err := n.removeLink(link.x, link.y)
+			if err != nil {
+				return err
+			}
+		}
 	}
-}
 
-func Verbose() NetworkOpt {
-	return func(s *networkOpts) {
-		s.verbose = true
+	// now clean up nodes
+	for _, key := range keys {
+		if len(n.ingress[key]) == 0 && len(n.egress[key]) == 0 {
+			err := n.removeNode(key)
+			if err != nil {
+				return err
+			}
+		}
 	}
-}
 
-func IgnoreIsolatedNodes() NetworkOpt {
-	return func(s *networkOpts) {
-		s.ignoreIsolatedNodes = true
-	}
-}
-
-func StopGracetime(t time.Duration) NetworkOpt {
-	return func(s *networkOpts) {
-		s.stopGracetime = t
-	}
-}
-
-func PreventCycles() NetworkOpt {
-	return func(s *networkOpts) {
-		s.preventCycles = true
-	}
+	return nil
 }

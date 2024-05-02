@@ -30,12 +30,11 @@ func main() {
 			svc.Register("draw", func(ctx context.Context, args []string) error {
 				net, _ := newNet(args[0])
 				if net != nil {
-					data, err := glow.DOT(net)
+					data, err := glow.DOT(net())
 					if err != nil {
 						fmt.Println(err)
 						return err
 					}
-
 					if _, err = os.Stat("bin"); os.IsNotExist(err) {
 						os.Mkdir("bin", os.FileMode(0755))
 					}
@@ -49,41 +48,42 @@ func main() {
 				up()
 				return nil
 			})
+
 			return nil
 		}),
 	))
 }
 
-func newNet(name string) (*glow.Network, func()) {
+func newNet(name string) (func() *glow.Network, func()) {
 	switch name {
 	case "pingponginfiniteseednet":
-		return pingponginfiniteseednet.Network(), pingponginfiniteseednet.Run
+		return pingponginfiniteseednet.Network, pingponginfiniteseednet.Run
 	case "distributornet":
-		return distributornet.Network(), distributornet.Run
+		return distributornet.Network, distributornet.Run
 	case "fan1seednet":
-		return fan1seednet.Network(), fan1seednet.Run
+		return fan1seednet.Network, fan1seednet.Run
 	case "fandistributsnet":
-		return fandistributsnet.Network(), fandistributsnet.Run
+		return fandistributsnet.Network, fandistributsnet.Run
 	case "fannet":
-		return fannet.Network(), fannet.Run
+		return fannet.Network, fannet.Run
 	case "loop1seednet":
-		return loop1seednet.Network(), loop1seednet.Run
+		return loop1seednet.Network, loop1seednet.Run
 	case "oncenet":
-		return oncenet.Network(), oncenet.Run
+		return oncenet.Network, oncenet.Run
 	case "onewaynet":
-		return onewaynet.Network(), onewaynet.Run
+		return onewaynet.Network, onewaynet.Run
 	case "pingpong1seednet":
-		return pingpong1seednet.Network(), pingpong1seednet.Run
+		return pingpong1seednet.Network, pingpong1seednet.Run
 	case "pingpong2seednet":
-		return pingpong2seednet.Network(), pingpong2seednet.Run
+		return pingpong2seednet.Network, pingpong2seednet.Run
 	case "pingpongnet":
-		return pingpongnet.Network(), pingpongnet.Run
+		return pingpongnet.Network, pingpongnet.Run
 	case "selfloop1seednet":
-		return selfloop1seednet.Network(), selfloop1seednet.Run
+		return selfloop1seednet.Network, selfloop1seednet.Run
 	case "selfloopnet":
-		return selfloopnet.Network(), selfloopnet.Run
+		return selfloopnet.Network, selfloopnet.Run
 	case "subwaynet":
-		return subwaynet.Network(), subwaynet.Run
+		return subwaynet.Network, subwaynet.Run
 	default:
 		return nil, nil
 	}
