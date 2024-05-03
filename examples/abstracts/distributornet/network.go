@@ -1,12 +1,12 @@
-package distributornet
+package main
 
 import (
 	"context"
 	"fmt"
 	"github.com/lnashier/glow"
+	"github.com/lnashier/glow/help"
 	"github.com/lnashier/goarc"
 	xtime "github.com/lnashier/goarc/x/time"
-	"os"
 	"sync"
 	"time"
 )
@@ -16,78 +16,101 @@ var nodeInCounts sync.Map
 var nodeOutCounts sync.Map
 
 func Run() {
-	wg := &sync.WaitGroup{}
 	net := Network()
-	monitor(wg, net)
+
+	fmt.Println("Saving network")
+	help.Draw(net, "bin/network.gv")
+	fmt.Println("Saving network")
+
+	// goarc.Up blocks
+	// kick off goroutine to stop the network
+	go func() {
+		fmt.Println("Preparing to stop network")
+		xtime.SleepWithContext(context.Background(), time.Duration(10)*time.Second)
+		fmt.Println("Stopping network")
+		err := net.Stop()
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("Stopping network")
+	}()
+
+	fmt.Println("Starting network")
 	goarc.Up(net)
+	fmt.Println("Stopped network")
+
 	PrintResults()
-	wg.Wait()
+
+	fmt.Println("Saving network after first run")
+	help.Draw(net, "bin/network-tally.gv")
+	fmt.Println("Saved network after first run")
+
+	// modifications
+	modify(net, false)
+
+	fmt.Println("Saving modified network")
+	help.Draw(net, "bin/network-modified.gv")
+	fmt.Println("Saved modified network")
+
+	// kick off goroutine to stop the network
+	// goarc.Up blocks
+	go func() {
+		fmt.Println("Preparing to stop network to undo modifications")
+		xtime.SleepWithContext(context.Background(), time.Duration(10)*time.Second)
+		fmt.Println("Stopping network to undo modifications")
+		err := net.Stop()
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("Stopped network to undo modifications")
+	}()
+
+	fmt.Println("Starting modified network")
+	goarc.Up(net)
+	fmt.Println("Stopped modified network")
+
+	fmt.Println("Saving modified network after rerun")
+	help.Draw(net, "bin/network-modified-tally.gv")
+	fmt.Println("Saved modified network after rerun")
+
+	// undo modifications
+	modify(net, true)
+
+	fmt.Println("Saving undone network")
+	help.Draw(net, "bin/network-undone.gv")
+	fmt.Println("Saved undone network")
+
+	fmt.Println("Starting undone network")
+	goarc.Up(net)
+	fmt.Println("Stopped undone network")
+
+	fmt.Println("Saving undone network after rerun")
+	help.Draw(net, "bin/network-undone-tally.gv")
+	fmt.Println("Saved undone network after rerun")
+
+	PrintResults()
 }
 
 func Network() *glow.Network {
-	n := glow.New(glow.Verbose(), glow.IgnoreIsolatedNodes())
+	net := glow.New(glow.Verbose(), glow.IgnoreIsolatedNodes())
 
-	node1ID := "node-1"
-	seedCounts.Store(node1ID, 0)
-	nodeInCounts.Store(node1ID, make([]int, 0))
-	nodeOutCounts.Store(node1ID, make([]int, 0))
+	node1ID := "node1"
+	addSeed(net, node1ID, glow.Distributor())
 
-	n.AddNode(func(ctx context.Context, _ any) (any, error) {
-		xtime.SleepWithContext(ctx, time.Duration(1)*time.Second)
+	node2ID := "node2"
+	addNode(net, node2ID)
 
-		num1, _ := seedCounts.Load(node1ID)
-		num := num1.(int)
+	node3ID := "node3"
+	addNode(net, node3ID)
 
-		/*
-			if num.(int) > 10 {
-				return nil, glow.ErrSeedingDone
-			}
-		*/
+	node4ID := "node4"
+	addNode(net, node4ID)
 
-		seedCounts.Store(node1ID, num+1)
+	net.AddLink(node1ID, node2ID)
+	net.AddLink(node1ID, node3ID)
+	net.AddLink(node1ID, node4ID)
 
-		defer func() {
-			outCounts, _ := nodeOutCounts.Load(node1ID)
-			nodeOutCounts.Store(node1ID, append(outCounts.([]int), num+1))
-		}()
-
-		return num + 1, nil
-	}, glow.Key(node1ID), glow.Distributor())
-
-	node2ID := "node-2"
-	nodeInCounts.Store(node2ID, make([]int, 0))
-	nodeOutCounts.Store(node2ID, make([]int, 0))
-
-	n.AddNode(func(ctx context.Context, in1 any) (any, error) {
-		in := in1.(int)
-		inCounts, _ := nodeInCounts.Load(node2ID)
-		nodeInCounts.Store(node2ID, append(inCounts.([]int), in))
-		defer func() {
-			outCounts, _ := nodeOutCounts.Load(node2ID)
-			nodeOutCounts.Store(node2ID, append(outCounts.([]int), in))
-		}()
-		return in, nil
-	}, glow.Key(node2ID))
-
-	node3ID := "node-3"
-	nodeInCounts.Store(node3ID, make([]int, 0))
-	nodeOutCounts.Store(node3ID, make([]int, 0))
-
-	n.AddNode(func(ctx context.Context, in1 any) (any, error) {
-		in := in1.(int)
-		inCounts, _ := nodeInCounts.Load(node3ID)
-		nodeInCounts.Store(node3ID, append(inCounts.([]int), in))
-		defer func() {
-			outCounts, _ := nodeOutCounts.Load(node3ID)
-			nodeOutCounts.Store(node3ID, append(outCounts.([]int), in))
-		}()
-		return in, nil
-	}, glow.Key(node3ID))
-
-	n.AddLink(node1ID, node2ID)
-	n.AddLink(node1ID, node3ID)
-
-	return n
+	return net
 }
 
 func PrintResults() {
@@ -104,48 +127,108 @@ func PrintResults() {
 	})
 }
 
-func monitor(wg *sync.WaitGroup, n *glow.Network) {
-	nodeAID := "node-1"
-	nodeBID := "node-2"
+func addSeed(net *glow.Network, nodeID string, opt ...glow.NodeOpt) {
+	if len(opt) == 0 {
+		opt = []glow.NodeOpt{}
+	}
+	opt = append(opt, glow.Key(nodeID))
 
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		fmt.Printf("Preparing to remove link between %s and %s\n", nodeAID, nodeBID)
+	seedCounts.Store(nodeID, 0)
+	nodeInCounts.Store(nodeID, make([]int, 0))
+	nodeOutCounts.Store(nodeID, make([]int, 0))
+	net.AddNode(func(ctx context.Context, _ any) (any, error) {
+		xtime.SleepWithContext(ctx, time.Duration(1)*time.Second)
 
-		xtime.SleepWithContext(context.Background(), time.Duration(10)*time.Second)
+		num1, _ := seedCounts.Load(nodeID)
+		num := num1.(int)
 
-		fmt.Printf("Stopping network to remove link between %s and %s\n", nodeAID, nodeBID)
-		err := n.Stop()
+		/*
+			if num.(int) > 10 {
+				return nil, glow.ErrSeedingDone
+			}
+		*/
+
+		seedCounts.Store(nodeID, num+1)
+
+		defer func() {
+			outCounts, _ := nodeOutCounts.Load(nodeID)
+			nodeOutCounts.Store(nodeID, append(outCounts.([]int), num+1))
+		}()
+
+		return num + 1, nil
+	}, opt...)
+}
+
+func addNode(net *glow.Network, nodeID string, opt ...glow.NodeOpt) {
+	opt = append(opt, glow.Key(nodeID))
+
+	nodeInCounts.Store(nodeID, make([]int, 0))
+	nodeOutCounts.Store(nodeID, make([]int, 0))
+	net.AddNode(func(ctx context.Context, in1 any) (any, error) {
+		in := in1.(int)
+		inCounts, _ := nodeInCounts.Load(nodeID)
+		nodeInCounts.Store(nodeID, append(inCounts.([]int), in))
+		defer func() {
+			outCounts, _ := nodeOutCounts.Load(nodeID)
+			nodeOutCounts.Store(nodeID, append(outCounts.([]int), in))
+		}()
+		return in, nil
+	}, opt...)
+}
+
+func modify(net *glow.Network, undo bool) {
+	node1ID := "node1"
+	node2ID := "node2"
+	node4ID := "node4"
+
+	if undo {
+		fmt.Println("Purging network")
+		err := net.Purge()
 		if err != nil {
 			panic(err)
 		}
-		fmt.Printf("Stopped network to remove link between %s and %s\n", nodeAID, nodeBID)
+		fmt.Println("Purged network")
 
-		PrintResults()
+		fmt.Println("Saving purged network")
+		help.Draw(net, "bin/network-purged.gv")
+		fmt.Println("Saved purged network")
 
-		fmt.Printf("Removing link between %s and %s\n", nodeAID, nodeBID)
-		err = n.RemoveLink(nodeAID, nodeBID)
+		fmt.Printf("Adding node %s %s\n", node2ID)
+		addNode(net, node2ID)
+		fmt.Printf("Added node %s %s\n", node2ID)
+
+		fmt.Printf("Adding link between %s and %s\n", node1ID, node2ID)
+		err = net.AddLink(node1ID, node2ID)
 		if err != nil {
-			fmt.Printf("Error %v while removing link between %s and %s\n", err, nodeAID, nodeBID)
-			return
-		}
-		fmt.Printf("Removed link between %s and %s\n", nodeAID, nodeBID)
-
-		fmt.Printf("Saving network after removing link between %s and %s\n", nodeAID, nodeBID)
-		data, err := glow.DOT(n)
-		if err != nil {
+			fmt.Printf("Error %v while adding link between %s and %s\n", err, node1ID, node2ID)
 			panic(err)
 		}
-		err = os.WriteFile("bin/modified-distributornet.gv", data, os.FileMode(0755))
+		fmt.Printf("Added link between %s and %s\n", node1ID, node2ID)
+
+		fmt.Printf("Resuming link between %s and %s\n", node1ID, node4ID)
+		err = net.ResumeLink(node1ID, node4ID)
 		if err != nil {
+			fmt.Printf("Error %v while resuming link between %s and %s\n", err, node1ID, node4ID)
 			panic(err)
 		}
-		fmt.Printf("Saved network after removing link between %s and %s\n", nodeAID, nodeBID)
+		fmt.Printf("Resumed link between %s and %s\n", node1ID, node4ID)
 
-		fmt.Printf("Starting network after removing link between %s and %s\n", nodeAID, nodeBID)
-		goarc.Up(n)
+		return
+	}
 
-		PrintResults()
-	}()
+	fmt.Printf("Removing link between %s and %s\n", node1ID, node2ID)
+	err := net.RemoveLink(node1ID, node2ID)
+	if err != nil {
+		fmt.Printf("Error %v while removing link between %s and %s\n", err, node1ID, node2ID)
+		panic(err)
+	}
+	fmt.Printf("Removed link between %s and %s\n", node1ID, node2ID)
+
+	fmt.Printf("Pausing link between %s and %s\n", node1ID, node4ID)
+	err = net.PauseLink(node1ID, node4ID)
+	if err != nil {
+		fmt.Printf("Error %v while pausing link between %s and %s\n", err, node1ID, node4ID)
+		panic(err)
+	}
+	fmt.Printf("Paused link between %s and %s\n", node1ID, node4ID)
 }
