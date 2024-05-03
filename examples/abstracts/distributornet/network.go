@@ -1,12 +1,12 @@
-package distributornet
+package main
 
 import (
 	"context"
 	"fmt"
 	"github.com/lnashier/glow"
+	"github.com/lnashier/glow/help"
 	"github.com/lnashier/goarc"
 	xtime "github.com/lnashier/goarc/x/time"
-	"os"
 	"sync"
 	"time"
 )
@@ -18,12 +18,12 @@ var nodeOutCounts sync.Map
 func Run() {
 	net := Network()
 
-	fmt.Printf("Saving network\n")
-	draw(net, "distributornet")
-	fmt.Printf("Saving network\n")
+	fmt.Println("Saving network")
+	help.Draw(net, "bin/network.gv")
+	fmt.Println("Saving network")
 
-	// kick off goroutine to stop the network
 	// goarc.Up blocks
+	// kick off goroutine to stop the network
 	go func() {
 		fmt.Println("Preparing to stop network")
 		xtime.SleepWithContext(context.Background(), time.Duration(10)*time.Second)
@@ -35,22 +35,22 @@ func Run() {
 		fmt.Println("Stopping network")
 	}()
 
-	fmt.Printf("Starting network\n")
+	fmt.Println("Starting network")
 	goarc.Up(net)
-	fmt.Printf("Stopped network\n")
+	fmt.Println("Stopped network")
 
 	PrintResults()
 
-	fmt.Printf("Saving network after first run\n")
-	draw(net, "distributornet-tally")
-	fmt.Printf("Saved network after first run\n")
+	fmt.Println("Saving network after first run")
+	help.Draw(net, "bin/network-tally.gv")
+	fmt.Println("Saved network after first run")
 
 	// modifications
 	modify(net, false)
 
-	fmt.Printf("Saving modified network\n")
-	draw(net, "distributornet-modified")
-	fmt.Printf("Saved modified network\n")
+	fmt.Println("Saving modified network")
+	help.Draw(net, "bin/network-modified.gv")
+	fmt.Println("Saved modified network")
 
 	// kick off goroutine to stop the network
 	// goarc.Up blocks
@@ -65,28 +65,28 @@ func Run() {
 		fmt.Println("Stopped network to undo modifications")
 	}()
 
-	fmt.Printf("Starting modified network\n")
+	fmt.Println("Starting modified network")
 	goarc.Up(net)
-	fmt.Printf("Stopped modified network\n")
+	fmt.Println("Stopped modified network")
 
-	fmt.Printf("Saving modified network after rerun\n")
-	draw(net, "distributornet-modified-tally")
-	fmt.Printf("Saved modified network after rerun\n")
+	fmt.Println("Saving modified network after rerun")
+	help.Draw(net, "bin/network-modified-tally.gv")
+	fmt.Println("Saved modified network after rerun")
 
 	// undo modifications
 	modify(net, true)
 
-	fmt.Printf("Saving undone network\n")
-	draw(net, "distributornet-undone")
-	fmt.Printf("Saved undone network\n")
+	fmt.Println("Saving undone network")
+	help.Draw(net, "bin/network-undone.gv")
+	fmt.Println("Saved undone network")
 
-	fmt.Printf("Starting undone network\n")
+	fmt.Println("Starting undone network")
 	goarc.Up(net)
-	fmt.Printf("Stopped undone network\n")
+	fmt.Println("Stopped undone network")
 
-	fmt.Printf("Saving undone network after rerun\n")
-	draw(net, "distributornet-undone-tally")
-	fmt.Printf("Saved undone network after rerun\n")
+	fmt.Println("Saving undone network after rerun")
+	help.Draw(net, "bin/network-undone-tally.gv")
+	fmt.Println("Saved undone network after rerun")
 
 	PrintResults()
 }
@@ -189,9 +189,9 @@ func modify(net *glow.Network, undo bool) {
 		}
 		fmt.Println("Purged network")
 
-		fmt.Printf("Saving purged network\n")
-		draw(net, "distributornet-purged")
-		fmt.Printf("Saved purged network\n")
+		fmt.Println("Saving purged network")
+		help.Draw(net, "bin/network-purged.gv")
+		fmt.Println("Saved purged network")
 
 		fmt.Printf("Adding node %s %s\n", node2ID)
 		addNode(net, node2ID)
@@ -231,15 +231,4 @@ func modify(net *glow.Network, undo bool) {
 		panic(err)
 	}
 	fmt.Printf("Paused link between %s and %s\n", node1ID, node4ID)
-}
-
-func draw(net *glow.Network, name string) {
-	data, err := glow.DOT(net)
-	if err != nil {
-		panic(err)
-	}
-	if _, err = os.Stat("bin"); os.IsNotExist(err) {
-		os.Mkdir("bin", os.FileMode(0755))
-	}
-	os.WriteFile(fmt.Sprintf("bin/%s.gv", name), data, os.FileMode(0755))
 }

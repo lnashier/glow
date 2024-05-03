@@ -1,9 +1,10 @@
-package pingponginfiniteseednet
+package main
 
 import (
 	"context"
 	"fmt"
 	"github.com/lnashier/glow"
+	"github.com/lnashier/glow/help"
 	"github.com/lnashier/goarc"
 	"strconv"
 )
@@ -16,7 +17,10 @@ var node2InCounts []string
 var node2OutCounts []string
 
 func Run() {
-	goarc.Up(Network())
+	net := Network()
+	help.Draw(net, "bin/network.gv")
+	goarc.Up(net)
+	help.Draw(net, "bin/network-tally.gv")
 	PrintResults()
 }
 

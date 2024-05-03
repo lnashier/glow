@@ -1,9 +1,10 @@
-package pingpongnet
+package main
 
 import (
 	"context"
 	"fmt"
 	"github.com/lnashier/glow"
+	"github.com/lnashier/glow/help"
 	"github.com/lnashier/goarc"
 	xtime "github.com/lnashier/goarc/x/time"
 	"sync"
@@ -15,7 +16,10 @@ var nodeInCounts sync.Map
 var nodeOutCounts sync.Map
 
 func Run() {
-	goarc.Up(Network())
+	net := Network()
+	help.Draw(net, "bin/network.gv")
+	goarc.Up(net)
+	help.Draw(net, "bin/network-tally.gv")
 	PrintResults()
 }
 
