@@ -1,6 +1,6 @@
 # Examples
 
-## One Way Networks
+## Oneway Networks
 
 [Once Single Seed One Way Linear Network](oncenet/)
 
@@ -16,7 +16,7 @@
 
 [Multiple Networks](subnet/)
 
-## Loop Networks
+## Cyclic Networks
 
 [One Node Self Loop Network](selfloopnet/)
 
