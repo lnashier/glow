@@ -21,75 +21,20 @@ type Network struct {
 	preventCycles       bool
 }
 
-type session struct {
-	mu     *sync.RWMutex
-	ctx    context.Context
-	cancel func()
-}
-
-type NetworkOpt func(*networkOpts)
-
-type networkOpts struct {
-	verbose             bool
-	stopGracetime       time.Duration
-	ignoreIsolatedNodes bool
-	preventCycles       bool
-}
-
-var defaultNetworkOpts = networkOpts{}
-
-func (s *networkOpts) apply(opts []NetworkOpt) {
-	for _, o := range opts {
-		o(s)
-	}
-}
-
-func Verbose() NetworkOpt {
-	return func(s *networkOpts) {
-		s.verbose = true
-	}
-}
-
-func IgnoreIsolatedNodes() NetworkOpt {
-	return func(s *networkOpts) {
-		s.ignoreIsolatedNodes = true
-	}
-}
-
-func StopGracetime(t time.Duration) NetworkOpt {
-	return func(s *networkOpts) {
-		s.stopGracetime = t
-	}
-}
-
-func PreventCycles() NetworkOpt {
-	return func(s *networkOpts) {
-		s.preventCycles = true
-	}
-}
-
 // New creates a new [Network].
 func New(opt ...NetworkOpt) *Network {
-	opts := defaultNetworkOpts
-	opts.apply(opt)
-
-	return &Network{
+	net := &Network{
 		mu: &sync.RWMutex{},
 		session: &session{
 			mu: &sync.RWMutex{},
 		},
-		log: func(format string, a ...any) {
-			if opts.verbose {
-				fmt.Println(fmt.Sprintf("[%s] %s", time.Now().Format("2006-01-02 15:04:05.000"), fmt.Sprintf(format, a...)))
-			}
-		},
-		nodes:               make(map[string]*Node),
-		ingress:             make(map[string]map[string]*Link),
-		egress:              make(map[string]map[string]*Link),
-		ignoreIsolatedNodes: opts.ignoreIsolatedNodes,
-		stopGracetime:       opts.stopGracetime,
-		preventCycles:       opts.preventCycles,
+		log:     func(format string, a ...any) {},
+		nodes:   make(map[string]*Node),
+		ingress: make(map[string]map[string]*Link),
+		egress:  make(map[string]map[string]*Link),
 	}
+	net.apply(opt...)
+	return net
 }
 
 // Start runs the Network.
@@ -172,4 +117,44 @@ func (n *Network) Purge() error {
 	}
 
 	return nil
+}
+
+func (s *Network) apply(opt ...NetworkOpt) {
+	for _, o := range opt {
+		o(s)
+	}
+}
+
+type session struct {
+	mu     *sync.RWMutex
+	ctx    context.Context
+	cancel func()
+}
+
+type NetworkOpt func(*Network)
+
+func Verbose() NetworkOpt {
+	return func(n *Network) {
+		n.log = func(format string, a ...any) {
+			fmt.Println(fmt.Sprintf("[%s] %s", time.Now().Format("2006-01-02 15:04:05.000"), fmt.Sprintf(format, a...)))
+		}
+	}
+}
+
+func IgnoreIsolatedNodes() NetworkOpt {
+	return func(n *Network) {
+		n.ignoreIsolatedNodes = true
+	}
+}
+
+func StopGracetime(t time.Duration) NetworkOpt {
+	return func(n *Network) {
+		n.stopGracetime = t
+	}
+}
+
+func PreventCycles() NetworkOpt {
+	return func(n *Network) {
+		n.preventCycles = true
+	}
 }

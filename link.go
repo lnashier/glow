@@ -5,10 +5,26 @@ package glow
 type Link struct {
 	x       string
 	y       string
+	size    int
 	ch      chan any
 	tally   int
 	paused  bool
 	deleted bool
+}
+
+type LinkOpt func(*Link)
+
+func (l *Link) apply(opt ...LinkOpt) {
+	for _, o := range opt {
+		o(l)
+	}
+}
+
+// Size sets bandwidth for the Link.
+func Size(k int) LinkOpt {
+	return func(l *Link) {
+		l.size = k
+	}
 }
 
 // From returns the key of the "from" Node connected by this link.
@@ -24,27 +40,6 @@ func (l *Link) To() string {
 // Tally returns the total count of data transmitted over the link thus far.
 func (l *Link) Tally() int {
 	return l.tally
-}
-
-type LinkOpt func(*linkOpts)
-
-type linkOpts struct {
-	size int
-}
-
-var defaultLinkOpts = linkOpts{}
-
-func (s *linkOpts) apply(opts []LinkOpt) {
-	for _, o := range opts {
-		o(s)
-	}
-}
-
-// Size sets bandwidth for the Link.
-func Size(k int) LinkOpt {
-	return func(s *linkOpts) {
-		s.size = k
-	}
 }
 
 // AddLink connects from-node to to-node.
@@ -81,41 +76,33 @@ func (n *Network) AddLink(from, to string, opt ...LinkOpt) error {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
-	opts := defaultLinkOpts
-	opts.apply(opt)
-
-	var ch chan any
+	link := &Link{
+		x: from,
+		y: to,
+	}
+	link.apply(opt...)
 
 	if xNode.distributor {
 		// if there exists another egress for node-x then get existing channel
 		if xEgress := n.egress[xNode.key]; len(xEgress) > 0 {
 			for _, xLink := range xEgress {
-				ch = xLink.ch
+				link.ch = xLink.ch
 				break
 			}
 		}
 	}
-
-	if ch == nil {
-		ch = make(chan any, opts.size)
-	}
-
-	link := &Link{
-		x:  from,
-		y:  to,
-		ch: ch,
+	if link.ch == nil {
+		link.ch = make(chan any, link.size)
 	}
 
 	if _, ok := n.egress[from]; !ok {
 		n.egress[from] = make(map[string]*Link)
 	}
-
 	n.egress[from][to] = link
 
 	if _, ok := n.ingress[to]; !ok {
 		n.ingress[to] = make(map[string]*Link)
 	}
-
 	n.ingress[to][from] = link
 
 	return nil

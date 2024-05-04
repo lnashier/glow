@@ -8,6 +8,9 @@ import (
 	"strings"
 )
 
+// NodeFunc is the function responsible for processing incoming data on the Node.
+type NodeFunc func(context.Context, any) (any, error)
+
 // Node represents a node within the [Network].
 // If a Node has only egress Links, it's a Seed node.
 // If a Node has only ingress Links, it's a Terminus node.
@@ -19,14 +22,11 @@ type Node struct {
 	emitter     bool
 }
 
-func (n *Node) apply(opts []NodeOpt) {
-	for _, o := range opts {
+func (n *Node) apply(opt ...NodeOpt) {
+	for _, o := range opt {
 		o(n)
 	}
 }
-
-// NodeFunc is the function responsible for processing incoming data on the Node.
-type NodeFunc func(context.Context, any) (any, error)
 
 type NodeOpt func(*Node)
 
@@ -69,7 +69,7 @@ func (n *Network) AddNode(f NodeFunc, opt ...NodeOpt) (string, error) {
 	node := &Node{
 		f: f,
 	}
-	node.apply(opt)
+	node.apply(opt...)
 
 	if len(node.key) == 0 {
 		return node.key, ErrBadNodeKey
