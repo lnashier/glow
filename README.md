@@ -15,6 +15,7 @@ The `glow` is an idiomatic computational network framework.
 - [x] Terminal Node
 - [x] Broadcaster Node
 - [x] Distributor Node
+- [ ] Emitter Node
 - [x] Sessions (start / stop)
 - [ ] ~~Network modifications while network is up (e.g. Remove link, Add Link)~~
 - [ ] ~~ACK~~

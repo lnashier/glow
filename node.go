@@ -16,50 +16,49 @@ type Node struct {
 	key         string
 	f           NodeFunc
 	distributor bool
+	emitter     bool
+}
+
+func (n *Node) apply(opts []NodeOpt) {
+	for _, o := range opts {
+		o(n)
+	}
 }
 
 // NodeFunc is the function responsible for processing incoming data on the Node.
 type NodeFunc func(context.Context, any) (any, error)
 
-type NodeOpt func(*nodeOpts)
-
-type nodeOpts struct {
-	keyFunc     func() string
-	key         string
-	distributor bool
-}
-
-var defaultNodeOpts = nodeOpts{}
-
-func (s *nodeOpts) apply(opts []NodeOpt) {
-	for _, o := range opts {
-		o(s)
-	}
-}
+type NodeOpt func(*Node)
 
 // KeyFunc sets function to generate unique keys for the Node.
-func KeyFunc(k func() string) NodeOpt {
-	return func(s *nodeOpts) {
-		s.keyFunc = k
+func KeyFunc(f func() string) NodeOpt {
+	return func(n *Node) {
+		n.key = f()
 	}
 }
 
 // Key sets the key for the Node.
 func Key(k string) NodeOpt {
-	return func(s *nodeOpts) {
-		s.key = k
+	return func(n *Node) {
+		n.key = k
 	}
 }
 
 func Distributor() NodeOpt {
-	return func(s *nodeOpts) {
-		s.distributor = true
+	return func(n *Node) {
+		n.distributor = true
+	}
+}
+
+func Emitter() NodeOpt {
+	return func(n *Node) {
+		n.emitter = true
 	}
 }
 
 // AddNode adds a new Node in the network.
 // Node key is retrieved from the provided [Key] function if not given.
-func (n *Network) AddNode(node NodeFunc, opt ...NodeOpt) (string, error) {
+func (n *Network) AddNode(f NodeFunc, opt ...NodeOpt) (string, error) {
 	// check if session is in progress
 	n.session.mu.RLock()
 	defer n.session.mu.RUnlock()
@@ -67,28 +66,22 @@ func (n *Network) AddNode(node NodeFunc, opt ...NodeOpt) (string, error) {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
-	opts := defaultNodeOpts
-	opts.apply(opt)
-
-	k := opts.key
-	if len(k) == 0 && opts.keyFunc != nil {
-		k = opts.keyFunc()
+	node := &Node{
+		f: f,
 	}
-	if len(k) == 0 {
-		return k, ErrBadNodeKey
+	node.apply(opt)
+
+	if len(node.key) == 0 {
+		return node.key, ErrBadNodeKey
 	}
 
-	if _, ok := n.nodes[k]; ok {
-		return k, ErrNodeAlreadyExists
+	if _, ok := n.nodes[node.key]; ok {
+		return node.key, ErrNodeAlreadyExists
 	}
 
-	n.nodes[k] = &Node{
-		key:         k,
-		distributor: opts.distributor,
-		f:           node,
-	}
+	n.nodes[node.key] = node
 
-	return k, nil
+	return node.key, nil
 }
 
 // Node returns the node identified by the provided key.
