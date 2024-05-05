@@ -38,7 +38,7 @@ func Network() *glow.Network {
 
 	node0Count := 0
 	node0, err := n.AddNode(func(ctx context.Context, _ any) (any, error) {
-		xtime.SleepWithContext(ctx, time.Second*5)
+		xtime.SleepWithContext(ctx, time.Second*1)
 
 		node0Count++
 
@@ -54,7 +54,7 @@ func Network() *glow.Network {
 
 	node1, err := n.AddNode(func(ctx context.Context, in1 any) (any, error) {
 		in := in1.([]byte)
-		xtime.SleepWithContext(ctx, time.Second*5)
+		xtime.SleepWithContext(ctx, time.Second*1)
 
 		node1InCounts = append(node1InCounts, string(in))
 		defer func() {
@@ -69,7 +69,7 @@ func Network() *glow.Network {
 
 	node2, err := n.AddNode(func(ctx context.Context, in1 any) (any, error) {
 		in := in1.([]byte)
-		xtime.SleepWithContext(ctx, time.Second*5)
+		xtime.SleepWithContext(ctx, time.Second*1)
 
 		node2InCounts = append(node2InCounts, string(in))
 		defer func() {

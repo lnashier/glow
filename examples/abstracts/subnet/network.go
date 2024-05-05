@@ -58,7 +58,7 @@ func Sub1Network(n *glow.Network) {
 	}
 
 	node0, err := n.AddNode(func(ctx context.Context, _ any) (any, error) {
-		xtime.SleepWithContext(ctx, time.Second*10)
+		xtime.SleepWithContext(ctx, time.Second*1)
 
 		num, _ := seedCounts.Load(100)
 
@@ -135,7 +135,7 @@ func Sub2Network(n *glow.Network) {
 	}
 
 	node0, err := n.AddNode(func(ctx context.Context, _ any) (any, error) {
-		xtime.SleepWithContext(ctx, time.Second*5)
+		xtime.SleepWithContext(ctx, time.Second*1)
 
 		num, _ := seedCounts.Load(200)
 		seedCounts.Store(200, num.(int)+1)
@@ -173,14 +173,14 @@ func Sub2Network(n *glow.Network) {
 
 func PrintResults() {
 	seedCounts.Range(func(k, v any) bool {
-		fmt.Printf("seedCounts[node-%d] Latest = %d\n", k.(int)+1, v)
+		fmt.Printf("seedCounts[node-%d] Latest = %d\n", k, v)
 		return true
 	})
 
 	nodeInCounts.Range(func(k, v any) bool {
-		fmt.Printf("nodeInCounts [node-%d] = %v (%d)\n", k.(int)+1, v, len(v.([]string)))
+		fmt.Printf("nodeInCounts [node-%d] = %v (%d)\n", k, v, len(v.([]string)))
 		nc, _ := nodeOutCounts.Load(k)
-		fmt.Printf("nodeOutCounts[node-%d] = %v (%d)\n", k.(int)+1, nc, len(nc.([]string)))
+		fmt.Printf("nodeOutCounts[node-%d] = %v (%d)\n", k, nc, len(nc.([]string)))
 		return true
 	})
 }

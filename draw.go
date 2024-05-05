@@ -36,8 +36,8 @@ func DOT(n *Network) ([]byte, error) {
 			switch prop {
 			case "peripheries":
 				switch {
-				case node.emitter:
-					return 3
+				case node.ef != nil:
+					return 2
 				default:
 					return 1
 				}

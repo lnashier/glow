@@ -151,9 +151,9 @@ func (n *Network) Purge() error {
 	return nil
 }
 
-func (s *Network) apply(opt ...NetworkOpt) {
+func (n *Network) apply(opt ...NetworkOpt) {
 	for _, o := range opt {
-		o(s)
+		o(n)
 	}
 }
 
