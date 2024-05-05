@@ -8,27 +8,39 @@ import (
 	"strings"
 )
 
-// NodeFunc is the function responsible for processing incoming data on the Node.
-type NodeFunc func(context.Context, any) (any, error)
-
 // Node represents a node within the [Network].
-// If a Node has only egress Links, it's a Seed node.
-// If a Node has only ingress Links, it's a Terminus node.
-// By default, a Node operates in broadcaster mode unless the distributor flag is set.
+//
+// Node types:
+//   - With no Links, Node is considered an isolated-node.
+//   - With only egress Links, Node is considered a seed-node.
+//   - With only ingress Links, Node is considered a terminus-node.
+//   - With both egress and ingress Links, Node is considered a transit-node.
+//
+// Node operating modes:
+//   - By default, a Node operates in broadcaster mode unless the distributor flag is set.
+//     In broadcaster mode, Node broadcasts all incoming data to all outgoing links.
+//     When the distributor flag is enabled, a Node distributes incoming data among its outgoing links.
+//   - By default, a Node operates in "push-pull" mode, where the Network pushes data to NodeFunc and waits for NodeFunc to return.
+//     This behavior can be changed to "push-push" by setting the emitter setting for the Node.
+//     In emitter mode, the Network pushes data to NodeFunc, and the Node emits data back to the Network through the supplied channel.
+//     Emitter mode is not functional for isolated and terminus nodes.
 type Node struct {
 	key         string
 	f           NodeFunc
-	distributor bool
 	emitter     bool
+	distributor bool
 }
+
+// NodeFunc is the function responsible for processing incoming data on the Node.
+type NodeFunc func(context.Context, any) (any, error)
+
+type NodeOpt func(*Node)
 
 func (n *Node) apply(opt ...NodeOpt) {
 	for _, o := range opt {
 		o(n)
 	}
 }
-
-type NodeOpt func(*Node)
 
 // KeyFunc sets function to generate unique keys for the Node.
 func KeyFunc(f func() string) NodeOpt {
@@ -98,7 +110,7 @@ func (n *Network) Node(k string) (*Node, error) {
 }
 
 // RemoveNode removes a node with provided key.
-// A node can't be removed if it is connected/linked to any other node in the network.
+// A node can't be removed if it is linked to any other node in the Network.
 func (n *Network) RemoveNode(k string) error {
 	// check if session is in progress
 	n.session.mu.RLock()
@@ -127,7 +139,7 @@ func (n *Network) removeNode(k string) error {
 }
 
 // Nodes returns all the nodes as their unique keys in the Network.
-// Node should be called to get actual node.
+// Network.Node should be called to get actual node.
 func (n *Network) Nodes() []string {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
@@ -141,7 +153,7 @@ func (n *Network) Nodes() []string {
 }
 
 // Seeds returns all the nodes that have only egress links.
-// Node should be called to get actual node.
+// Network.Node should be called to get actual node.
 func (n *Network) Seeds() []string {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
@@ -158,7 +170,7 @@ func (n *Network) Seeds() []string {
 }
 
 // Termini returns all the nodes that have only ingress links.
-// Node should be called to get actual node.
+// Network.Node should be called to get actual node.
 func (n *Network) Termini() []string {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
@@ -174,14 +186,9 @@ func (n *Network) Termini() []string {
 	return keys
 }
 
-func (n *Network) nodeUp(ctx context.Context, key string) error {
-	n.log("Node(%s) coming up", key)
-	defer n.log("Node(%s) shut down", key)
-
-	node, err := n.Node(key)
-	if err != nil {
-		return err
-	}
+func (n *Network) nodeUp(ctx context.Context, node *Node) error {
+	n.log("Node(%s) coming up", node.key)
+	defer n.log("Node(%s) shut down", node.key)
 
 	ingress := slices.DeleteFunc(n.Ingress(node.key), func(l *Link) bool {
 		return l.paused || l.deleted
@@ -199,7 +206,7 @@ func (n *Network) nodeUp(ctx context.Context, key string) error {
 		return ErrIsolatedNodeFound
 	}
 
-	egressYs := ""
+	var egressYs string
 	if len(egress) > 0 && node.distributor {
 		for _, egressLink := range egress {
 			egressYs += egressLink.y + ","

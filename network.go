@@ -21,6 +21,34 @@ type Network struct {
 	preventCycles       bool
 }
 
+type NetworkOpt func(*Network)
+
+func Verbose() NetworkOpt {
+	return func(n *Network) {
+		n.log = func(format string, a ...any) {
+			fmt.Println(fmt.Sprintf("[%s] %s", time.Now().Format("2006-01-02 15:04:05.000"), fmt.Sprintf(format, a...)))
+		}
+	}
+}
+
+func IgnoreIsolatedNodes() NetworkOpt {
+	return func(n *Network) {
+		n.ignoreIsolatedNodes = true
+	}
+}
+
+func StopGracetime(t time.Duration) NetworkOpt {
+	return func(n *Network) {
+		n.stopGracetime = t
+	}
+}
+
+func PreventCycles() NetworkOpt {
+	return func(n *Network) {
+		n.preventCycles = true
+	}
+}
+
 // New creates a new [Network].
 func New(opt ...NetworkOpt) *Network {
 	net := &Network{
@@ -65,7 +93,11 @@ func (n *Network) Start() error {
 
 	for _, key := range keys {
 		wg.Go(func() error {
-			return n.nodeUp(ctx, key)
+			node, err := n.Node(key)
+			if err != nil {
+				return err
+			}
+			return n.nodeUp(ctx, node)
 		})
 	}
 
@@ -129,32 +161,4 @@ type session struct {
 	mu     *sync.RWMutex
 	ctx    context.Context
 	cancel func()
-}
-
-type NetworkOpt func(*Network)
-
-func Verbose() NetworkOpt {
-	return func(n *Network) {
-		n.log = func(format string, a ...any) {
-			fmt.Println(fmt.Sprintf("[%s] %s", time.Now().Format("2006-01-02 15:04:05.000"), fmt.Sprintf(format, a...)))
-		}
-	}
-}
-
-func IgnoreIsolatedNodes() NetworkOpt {
-	return func(n *Network) {
-		n.ignoreIsolatedNodes = true
-	}
-}
-
-func StopGracetime(t time.Duration) NetworkOpt {
-	return func(n *Network) {
-		n.stopGracetime = t
-	}
-}
-
-func PreventCycles() NetworkOpt {
-	return func(n *Network) {
-		n.preventCycles = true
-	}
 }
