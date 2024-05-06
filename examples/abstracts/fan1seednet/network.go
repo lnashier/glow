@@ -43,7 +43,7 @@ func Network() *glow.Network {
 	}
 
 	node0, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, _ any) (any, error) {
-		xtime.SleepWithContext(ctx, time.Second*5)
+		xtime.SleepWithContext(ctx, time.Second*1)
 
 		num, _ := seedCounts.Load(0)
 		seedCounts.Store(0, num.(int)+1)
@@ -82,7 +82,7 @@ func Network() *glow.Network {
 			nodeOutCounts.Store(2, append(outCounts.([]string), string(in)))
 		}()
 		return in, nil
-	}), glow.KeyFunc(keygen))
+	}), glow.KeyFunc(keygen), glow.Distributor())
 	if err != nil {
 		panic(err)
 	}

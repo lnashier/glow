@@ -25,7 +25,7 @@
 <title>node&#45;100&#45;&gt;node&#45;101</title>
 <path fill="none" stroke="lightblue" d="M45.72,-176.91C45.72,-165.26 45.72,-149.55 45.72,-136.02"/>
 <polygon fill="lightblue" stroke="lightblue" points="49.22,-136.36 45.72,-126.36 42.22,-136.36 49.22,-136.36"/>
-<text text-anchor="middle" x="52.85" y="-145.7" font-family="Times,serif" font-size="14.00"> &#160;1</text>
+<text text-anchor="middle" x="56.22" y="-145.7" font-family="Times,serif" font-size="14.00"> &#160;48</text>
 </g>
 <!-- node&#45;102 -->
 <g id="node3" class="node">
@@ -38,7 +38,7 @@
 <title>node&#45;101&#45;&gt;node&#45;102</title>
 <path fill="none" stroke="lightblue" d="M45.72,-88.41C45.72,-76.76 45.72,-61.05 45.72,-47.52"/>
 <polygon fill="lightblue" stroke="lightblue" points="49.22,-47.86 45.72,-37.86 42.22,-47.86 49.22,-47.86"/>
-<text text-anchor="middle" x="52.85" y="-57.2" font-family="Times,serif" font-size="14.00"> &#160;1</text>
+<text text-anchor="middle" x="56.22" y="-57.2" font-family="Times,serif" font-size="14.00"> &#160;48</text>
 </g>
 <!-- node&#45;200 -->
 <g id="node4" class="node">
@@ -57,7 +57,7 @@
 <title>node&#45;200&#45;&gt;node&#45;201</title>
 <path fill="none" stroke="lightblue" d="M154.72,-176.91C154.72,-165.26 154.72,-149.55 154.72,-136.02"/>
 <polygon fill="lightblue" stroke="lightblue" points="158.22,-136.36 154.72,-126.36 151.22,-136.36 158.22,-136.36"/>
-<text text-anchor="middle" x="165.22" y="-145.7" font-family="Times,serif" font-size="14.00"> &#160;34</text>
+<text text-anchor="middle" x="165.22" y="-145.7" font-family="Times,serif" font-size="14.00"> &#160;48</text>
 </g>
 </g>
 </svg>

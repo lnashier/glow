@@ -11,21 +11,22 @@ The `glow` is an idiomatic computational network framework.
 
 ## Wish List
 
-- [x] Seed Node
-- [x] Terminal Node
-- [x] Transit Node
-- [x] Broadcaster Mode
-- [x] Repeater Mode
-- [x] Distributor Mode
-- [x] Emitter Mode
-- [ ] ~~Collector Mode~~
-- [x] Sessions (start / stop)
+- [x] Seed node
+- [x] Terminal node
+- [x] Transit node
+- [x] Broadcaster mode
+- [x] Distributor mode
+- [x] Emitter mode
+  - [x] Repeater
+  - [x] Filter
+  - [x] Collector
+- [x] Sessions
 - [x] Pause links
 - [ ] Network integrity checks
   - [x] Avoid cycles
   - [x] Isolated nodes
 - [ ] Statistics
   - [x] Tally
-  - [ ] Most & least used path
+  - [ ] ~~Most & least used path~~
 - [ ] ~~Network modifications while network is up (e.g. Remove link, Add Link)~~
 - [ ] ~~ACK~~

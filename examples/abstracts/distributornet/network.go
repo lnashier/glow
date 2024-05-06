@@ -26,7 +26,7 @@ func Run() {
 	// kick off goroutine to stop the network
 	go func() {
 		fmt.Println("Preparing to stop network")
-		xtime.SleepWithContext(context.Background(), time.Duration(10)*time.Second)
+		xtime.SleepWithContext(context.Background(), time.Duration(30)*time.Second)
 		fmt.Println("Stopping network")
 		err := net.Stop()
 		if err != nil {
@@ -56,7 +56,7 @@ func Run() {
 	// goarc.Up blocks
 	go func() {
 		fmt.Println("Preparing to stop network to undo modifications")
-		xtime.SleepWithContext(context.Background(), time.Duration(10)*time.Second)
+		xtime.SleepWithContext(context.Background(), time.Duration(60)*time.Second)
 		fmt.Println("Stopping network to undo modifications")
 		err := net.Stop()
 		if err != nil {

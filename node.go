@@ -61,14 +61,14 @@ func Distributor() NodeOpt {
 }
 
 // NodeFunc is the function responsible for processing incoming data on the Node.
-func NodeFunc(f func(context.Context, any) (any, error)) NodeOpt {
+func NodeFunc(f func(ctx context.Context, data any) (any, error)) NodeOpt {
 	return func(n *Node) {
 		n.f = f
 	}
 }
 
 // EmitterFunc is similar to NodeFunc, but it additionally provides a callback where data can be emitted.
-func EmitterFunc(f func(context.Context, any, func(any)) error) NodeOpt {
+func EmitterFunc(f func(ctx context.Context, data any, emit func(any)) error) NodeOpt {
 	return func(n *Node) {
 		n.ef = f
 	}
@@ -227,7 +227,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 
 	switch {
 	case len(ingress) == 0 && len(egress) > 0:
-		n.log("Seed(%s) is running", node.key)
+		n.log("Seed Node(%s) is running", node.key)
 
 		if node.ef != nil {
 			nodeWg, nodeCtx := errgroup.WithContext(ctx)
@@ -336,7 +336,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 			}
 		}
 	case len(ingress) > 0 && len(egress) > 0:
-		n.log("Node(%s) is running", node.key)
+		n.log("Transit Node(%s) is running", node.key)
 
 		nodeWg, nodeCtx := errgroup.WithContext(ctx)
 
@@ -471,7 +471,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 			return err
 		}
 	case len(ingress) > 0 && len(egress) == 0:
-		n.log("Terminus(%s) is running", node.key)
+		n.log("Terminus Node(%s) is running", node.key)
 
 		nodeWg, nodeCtx := errgroup.WithContext(ctx)
 

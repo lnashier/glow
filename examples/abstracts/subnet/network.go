@@ -62,7 +62,7 @@ func Sub1Network(n *glow.Network) {
 
 		num, _ := seedCounts.Load(100)
 
-		if num.(int) > 100 {
+		if num.(int) > (100 + 50) {
 			return nil, glow.ErrSeedingDone
 		}
 
