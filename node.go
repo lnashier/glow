@@ -27,16 +27,10 @@ import (
 //     Emitter mode is not functional for isolated and terminus nodes.
 type Node struct {
 	key         string
-	f           NodeFunc
-	ef          EmitterFunc
+	f           func(context.Context, any) (any, error)
+	ef          func(context.Context, any, func(any)) error
 	distributor bool
 }
-
-// NodeFunc is the function responsible for processing incoming data on the Node.
-type NodeFunc func(context.Context, any) (any, error)
-
-// EmitterFunc is similar to NodeFunc, but it additionally provides a callback where data can be emitted.
-type EmitterFunc func(context.Context, any, func(any)) error
 
 type NodeOpt func(*Node)
 
@@ -66,13 +60,15 @@ func Distributor() NodeOpt {
 	}
 }
 
-func Func(f NodeFunc) NodeOpt {
+// NodeFunc is the function responsible for processing incoming data on the Node.
+func NodeFunc(f func(context.Context, any) (any, error)) NodeOpt {
 	return func(n *Node) {
 		n.f = f
 	}
 }
 
-func Emitter(f EmitterFunc) NodeOpt {
+// EmitterFunc is similar to NodeFunc, but it additionally provides a callback where data can be emitted.
+func EmitterFunc(f func(context.Context, any, func(any)) error) NodeOpt {
 	return func(n *Node) {
 		n.ef = f
 	}
@@ -238,6 +234,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 			nodeDataCh := make(chan any)
 
 			nodeWg.Go(func() error {
+				// When Seed node is in emitter mod, Node function is called once.
 				err := node.ef(nodeCtx, nil, func(nodeData any) {
 					select {
 					case <-nodeCtx.Done():

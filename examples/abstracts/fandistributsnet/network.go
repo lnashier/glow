@@ -99,7 +99,7 @@ func addSeed(net *glow.Network, nodeID string, emitter bool, opt ...glow.NodeOpt
 	nodeOutCounts.Store(nodeID, make([]int, 0))
 
 	if emitter {
-		opt = append(opt, glow.Emitter(func(ctx context.Context, _ any, emit func(any)) error {
+		opt = append(opt, glow.EmitterFunc(func(ctx context.Context, _ any, emit func(any)) error {
 			for {
 				select {
 				case <-ctx.Done():
@@ -119,7 +119,7 @@ func addSeed(net *glow.Network, nodeID string, emitter bool, opt ...glow.NodeOpt
 			}
 		}))
 	} else {
-		opt = append(opt, glow.Func(func(ctx context.Context, _ any) (any, error) {
+		opt = append(opt, glow.NodeFunc(func(ctx context.Context, _ any) (any, error) {
 			xtime.SleepWithContext(ctx, time.Duration(1)*time.Second)
 
 			num1, _ := seedCounts.Load(nodeID)
@@ -143,7 +143,7 @@ func addNode(net *glow.Network, nodeID string, emitter bool, opt ...glow.NodeOpt
 	nodeOutCounts.Store(nodeID, make([]int, 0))
 
 	if emitter {
-		opt = append(opt, glow.Emitter(func(ctx context.Context, in1 any, emit func(any)) error {
+		opt = append(opt, glow.EmitterFunc(func(ctx context.Context, in1 any, emit func(any)) error {
 			in := in1.(int)
 			inCounts, _ := nodeInCounts.Load(nodeID)
 			nodeInCounts.Store(nodeID, append(inCounts.([]int), in))
@@ -166,7 +166,7 @@ func addNode(net *glow.Network, nodeID string, emitter bool, opt ...glow.NodeOpt
 			}
 		}))
 	} else {
-		opt = append(opt, glow.Func(func(ctx context.Context, in1 any) (any, error) {
+		opt = append(opt, glow.NodeFunc(func(ctx context.Context, in1 any) (any, error) {
 			in := in1.(int)
 			inCounts, _ := nodeInCounts.Load(nodeID)
 			nodeInCounts.Store(nodeID, append(inCounts.([]int), in))

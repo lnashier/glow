@@ -37,7 +37,7 @@ func Network() *glow.Network {
 	n := glow.New(glow.Verbose(), glow.PreventCycles())
 
 	node0Count := 0
-	node0, err := n.AddNode(func(ctx context.Context, _ any) (any, error) {
+	node0, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, _ any) (any, error) {
 		xtime.SleepWithContext(ctx, time.Second*1)
 
 		node0Count++
@@ -47,12 +47,12 @@ func Network() *glow.Network {
 		}()
 
 		return []byte(fmt.Sprintf("%d", node0Count)), nil
-	}, glow.KeyFunc(keygen))
+	}), glow.KeyFunc(keygen))
 	if err != nil {
 		panic(err)
 	}
 
-	node1, err := n.AddNode(func(ctx context.Context, in1 any) (any, error) {
+	node1, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, in1 any) (any, error) {
 		in := in1.([]byte)
 		xtime.SleepWithContext(ctx, time.Second*1)
 
@@ -62,12 +62,12 @@ func Network() *glow.Network {
 		}()
 
 		return in, nil
-	}, glow.KeyFunc(keygen))
+	}), glow.KeyFunc(keygen))
 	if err != nil {
 		panic(err)
 	}
 
-	node2, err := n.AddNode(func(ctx context.Context, in1 any) (any, error) {
+	node2, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, in1 any) (any, error) {
 		in := in1.([]byte)
 		xtime.SleepWithContext(ctx, time.Second*1)
 
@@ -77,7 +77,7 @@ func Network() *glow.Network {
 		}()
 
 		return in, nil
-	}, glow.KeyFunc(keygen))
+	}), glow.KeyFunc(keygen))
 	if err != nil {
 		panic(err)
 	}
