@@ -1,8 +1,9 @@
 ### Single Seed Multi Nodes Broadcast Network
 
 This configuration closely resembles the basic setup, with information flowing from the seed node through each
-intermediate node until it reaches the network's end. However, in this variation, after processing, intermediate nodes
-broadcast incoming events to the subsequent nodes in the chain.
+intermediate node until it reaches the network's end. However, in this variation, after processing, one transit node
+broadcast incoming events to the subsequent nodes in the chain and other transit node distributes incoming events to the
+subsequent nodes in the chain.
 
 ![](shapes/network.svg)
 

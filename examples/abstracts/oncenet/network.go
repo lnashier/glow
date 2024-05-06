@@ -31,7 +31,7 @@ func Network() *glow.Network {
 	nodeInCounts.Store(node1ID, make([]int, 0))
 	nodeOutCounts.Store(node1ID, make([]int, 0))
 
-	_, err := n.AddNode(func(ctx context.Context, _ any) (any, error) {
+	_, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, _ any) (any, error) {
 		num, _ := seedCounts.Load(node1ID)
 
 		if num.(int) > 0 {
@@ -46,7 +46,7 @@ func Network() *glow.Network {
 		}()
 
 		return num.(int) + 1, nil
-	}, glow.Key(node1ID))
+	}), glow.Key(node1ID))
 	if err != nil {
 		panic(err)
 	}
@@ -55,7 +55,7 @@ func Network() *glow.Network {
 	nodeInCounts.Store(node2ID, make([]int, 0))
 	nodeOutCounts.Store(node2ID, make([]int, 0))
 
-	_, err = n.AddNode(func(ctx context.Context, in1 any) (any, error) {
+	_, err = n.AddNode(glow.NodeFunc(func(ctx context.Context, in1 any) (any, error) {
 		in := in1.(int)
 		xtime.SleepWithContext(ctx, time.Second*1)
 
@@ -66,7 +66,7 @@ func Network() *glow.Network {
 			nodeOutCounts.Store(node2ID, append(outCounts.([]int), in))
 		}()
 		return in, nil
-	}, glow.Key(node2ID))
+	}), glow.Key(node2ID))
 	if err != nil {
 		panic(err)
 	}

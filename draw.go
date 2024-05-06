@@ -12,6 +12,7 @@ const tmpl = `strict digraph {
 		[
 			style="{{ nodeProp "style" . }}",
 			fillcolor="{{ nodeProp "color" . }}"
+			peripheries="{{ nodeProp "peripheries" . }}"
 		];
     {{ end -}}
     {{ range .Links -}}
@@ -33,6 +34,13 @@ func DOT(n *Network) ([]byte, error) {
 			egress := n.Egress(k)
 
 			switch prop {
+			case "peripheries":
+				switch {
+				case node.ef != nil:
+					return 2
+				default:
+					return 1
+				}
 			case "color":
 				switch {
 				case len(egress) > 0 && node.distributor:

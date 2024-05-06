@@ -26,7 +26,7 @@ func Run() {
 	// kick off goroutine to stop the network
 	go func() {
 		fmt.Println("Preparing to stop network")
-		xtime.SleepWithContext(context.Background(), time.Duration(10)*time.Second)
+		xtime.SleepWithContext(context.Background(), time.Duration(30)*time.Second)
 		fmt.Println("Stopping network")
 		err := net.Stop()
 		if err != nil {
@@ -56,7 +56,7 @@ func Run() {
 	// goarc.Up blocks
 	go func() {
 		fmt.Println("Preparing to stop network to undo modifications")
-		xtime.SleepWithContext(context.Background(), time.Duration(10)*time.Second)
+		xtime.SleepWithContext(context.Background(), time.Duration(60)*time.Second)
 		fmt.Println("Stopping network to undo modifications")
 		err := net.Stop()
 		if err != nil {
@@ -136,7 +136,7 @@ func addSeed(net *glow.Network, nodeID string, opt ...glow.NodeOpt) {
 	seedCounts.Store(nodeID, 0)
 	nodeInCounts.Store(nodeID, make([]int, 0))
 	nodeOutCounts.Store(nodeID, make([]int, 0))
-	net.AddNode(func(ctx context.Context, _ any) (any, error) {
+	net.AddNode(append(opt, glow.NodeFunc(func(ctx context.Context, _ any) (any, error) {
 		xtime.SleepWithContext(ctx, time.Duration(1)*time.Second)
 
 		num1, _ := seedCounts.Load(nodeID)
@@ -156,7 +156,7 @@ func addSeed(net *glow.Network, nodeID string, opt ...glow.NodeOpt) {
 		}()
 
 		return num + 1, nil
-	}, opt...)
+	}))...)
 }
 
 func addNode(net *glow.Network, nodeID string, opt ...glow.NodeOpt) {
@@ -164,7 +164,7 @@ func addNode(net *glow.Network, nodeID string, opt ...glow.NodeOpt) {
 
 	nodeInCounts.Store(nodeID, make([]int, 0))
 	nodeOutCounts.Store(nodeID, make([]int, 0))
-	net.AddNode(func(ctx context.Context, in1 any) (any, error) {
+	net.AddNode(append(opt, glow.NodeFunc(func(ctx context.Context, in1 any) (any, error) {
 		in := in1.(int)
 		inCounts, _ := nodeInCounts.Load(nodeID)
 		nodeInCounts.Store(nodeID, append(inCounts.([]int), in))
@@ -173,7 +173,7 @@ func addNode(net *glow.Network, nodeID string, opt ...glow.NodeOpt) {
 			nodeOutCounts.Store(nodeID, append(outCounts.([]int), in))
 		}()
 		return in, nil
-	}, opt...)
+	}))...)
 }
 
 func modify(net *glow.Network, undo bool) {

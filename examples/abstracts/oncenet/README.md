@@ -1,7 +1,7 @@
 ### Once Single Seed One Way Linear Network
 
 In this network configuration, a single seed node initiates the transmission of data within the network. The data
-follows a linear path, progressing sequentially through each node until it reaches the terminal or sink node.
+follows a linear path, progressing sequentially through each node until it reaches the terminal node.
 
 ![](shapes/network.svg)
 

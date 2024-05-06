@@ -1,4 +1,4 @@
-### Once Single Seed Multi Nodes Loop Network (Once Seeded Multi Nodes Ping-Pong Network)
+### Seeded Multi Nodes Even-Odd Loop Network
 
 ![](shapes/network.svg)
 

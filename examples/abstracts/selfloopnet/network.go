@@ -49,7 +49,7 @@ func Network() *glow.Network {
 
 	seedingDone := false
 
-	_, err := n.AddNode(func(ctx context.Context, in1 any) (any, error) {
+	_, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, in1 any) (any, error) {
 		if !seedingDone {
 			defer func() {
 				seedingDone = true
@@ -68,7 +68,7 @@ func Network() *glow.Network {
 			nodeOutCounts.Store(node1ID, append(outCounts.([]string), string(in)))
 		}()
 		return in, nil
-	}, glow.Key(node1ID))
+	}), glow.Key(node1ID))
 	if err != nil {
 		panic(err)
 	}

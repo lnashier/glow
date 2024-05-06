@@ -7,7 +7,6 @@ import (
 	"github.com/lnashier/glow/help"
 	"github.com/lnashier/goarc"
 	xtime "github.com/lnashier/goarc/x/time"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -25,191 +24,173 @@ func Run() {
 }
 
 func Network() *glow.Network {
-	nodeCount := 0
-	keygen := func() string {
-		nodeCount++
-		return fmt.Sprintf("node-%d", nodeCount)
-	}
+	n := glow.New(glow.Verbose(), glow.PreventCycles())
 
-	n := glow.New(glow.Verbose())
+	// A seed node working in distributor mode
+	node1ID := "node-1"
+	addSeed(n, node1ID, false, glow.Distributor())
 
-	for i := range 3 {
-		seedCounts.Store(i, i*100)
-	}
+	// A seed node working in broadcaster mode
+	node2ID := "node-2"
+	addSeed(n, node2ID, false)
 
-	for i := range 8 {
-		nodeInCounts.Store(i, []string{})
-		nodeOutCounts.Store(i, []string{})
-	}
+	// A seed node working in distributor and emitter mode
+	node3ID := "node-3"
+	addSeed(n, node3ID, true, glow.Distributor())
 
-	node0, err := n.AddNode(func(ctx context.Context, _ any) (any, error) {
-		xtime.SleepWithContext(ctx, time.Second*1)
+	// A seed node working in broadcaster and emitter mode
+	node4ID := "node-4"
+	addSeed(n, node4ID, true)
 
-		num, _ := seedCounts.Load(0)
-		seedCounts.Store(0, num.(int)+1)
+	// A transit node working in distributor mode
+	node5ID := "node-5"
+	addNode(n, node5ID, false, glow.Distributor())
 
-		defer func() {
-			outCounts, _ := nodeOutCounts.Load(0)
-			nodeOutCounts.Store(0, append(outCounts.([]string), strconv.Itoa(num.(int)+1)))
-		}()
+	// A transit node working in broadcaster mode
+	node6ID := "node-6"
+	addNode(n, node6ID, false)
 
-		return []byte(fmt.Sprintf("%d", num.(int)+1)), nil
-	}, glow.KeyFunc(keygen))
-	if err != nil {
-		panic(err)
-	}
+	// A transit node working in distributor and emitter mode
+	node7ID := "node-7"
+	addNode(n, node7ID, true, glow.Distributor())
 
-	node1, err := n.AddNode(func(ctx context.Context, _ any) (any, error) {
-		xtime.SleepWithContext(ctx, time.Second*2)
+	// A transit node working in broadcaster and emitter mode
+	node8ID := "node-8"
+	addNode(n, node8ID, true)
 
-		num, _ := seedCounts.Load(1)
-		seedCounts.Store(1, num.(int)+1)
+	// A terminal node
+	node9ID := "node-9"
+	addNode(n, node9ID, false)
 
-		defer func() {
-			outCounts, _ := nodeOutCounts.Load(1)
-			nodeOutCounts.Store(1, append(outCounts.([]string), strconv.Itoa(num.(int)+1)))
-		}()
+	// A terminal node
+	node10ID := "node-10"
+	addNode(n, node10ID, false)
 
-		return []byte(fmt.Sprintf("%d", num.(int)+1)), nil
-	}, glow.KeyFunc(keygen))
-	if err != nil {
-		panic(err)
-	}
+	n.AddLink(node1ID, node5ID)
+	n.AddLink(node1ID, node6ID)
 
-	node2, err := n.AddNode(func(ctx context.Context, _ any) (any, error) {
-		xtime.SleepWithContext(ctx, time.Second*3)
+	n.AddLink(node2ID, node5ID)
+	n.AddLink(node2ID, node7ID)
 
-		num, _ := seedCounts.Load(2)
-		seedCounts.Store(2, num.(int)+1)
+	n.AddLink(node3ID, node5ID)
+	n.AddLink(node3ID, node6ID)
 
-		defer func() {
-			outCounts, _ := nodeOutCounts.Load(2)
-			nodeOutCounts.Store(2, append(outCounts.([]string), strconv.Itoa(num.(int)+1)))
-		}()
+	n.AddLink(node4ID, node7ID)
+	n.AddLink(node4ID, node8ID)
 
-		return []byte(fmt.Sprintf("%d", num.(int)+1)), nil
-	}, glow.KeyFunc(keygen))
-	if err != nil {
-		panic(err)
-	}
+	n.AddLink(node5ID, node9ID)
+	n.AddLink(node5ID, node10ID)
 
-	node3, err := n.AddNode(func(ctx context.Context, in1 any) (any, error) {
-		in := in1.([]byte)
-		inCounts, _ := nodeInCounts.Load(3)
-		nodeInCounts.Store(3, append(inCounts.([]string), string(in)))
-		defer func() {
-			outCounts, _ := nodeOutCounts.Load(3)
-			nodeOutCounts.Store(3, append(outCounts.([]string), string(in)))
-		}()
-		return in, nil
-	}, glow.KeyFunc(keygen))
-	if err != nil {
-		panic(err)
-	}
+	n.AddLink(node6ID, node9ID)
+	n.AddLink(node6ID, node10ID)
 
-	node4, err := n.AddNode(func(ctx context.Context, in1 any) (any, error) {
-		in := in1.([]byte)
-		inCounts, _ := nodeInCounts.Load(4)
-		nodeInCounts.Store(4, append(inCounts.([]string), string(in)))
-		defer func() {
-			outCounts, _ := nodeOutCounts.Load(4)
-			nodeOutCounts.Store(4, append(outCounts.([]string), string(in)))
-		}()
-		return in, nil
-	}, glow.KeyFunc(keygen), glow.Distributor())
-	if err != nil {
-		panic(err)
-	}
+	n.AddLink(node7ID, node9ID)
+	n.AddLink(node7ID, node10ID)
 
-	node5, err := n.AddNode(func(ctx context.Context, in1 any) (any, error) {
-		in := in1.([]byte)
-		inCounts, _ := nodeInCounts.Load(5)
-		nodeInCounts.Store(5, append(inCounts.([]string), string(in)))
-		defer func() {
-			outCounts, _ := nodeOutCounts.Load(5)
-			nodeOutCounts.Store(5, append(outCounts.([]string), string(in)))
-		}()
-		return in, nil
-	}, glow.KeyFunc(keygen))
-	if err != nil {
-		panic(err)
-	}
-
-	node6, err := n.AddNode(func(ctx context.Context, in1 any) (any, error) {
-		in := in1.([]byte)
-		inCounts, _ := nodeInCounts.Load(6)
-		nodeInCounts.Store(6, append(inCounts.([]string), string(in)))
-		defer func() {
-			outCounts, _ := nodeOutCounts.Load(6)
-			nodeOutCounts.Store(6, append(outCounts.([]string), string(in)))
-		}()
-		return in, nil
-	}, glow.KeyFunc(keygen))
-	if err != nil {
-		panic(err)
-	}
-
-	node7, err := n.AddNode(func(ctx context.Context, in1 any) (any, error) {
-		in := in1.([]byte)
-		inCounts, _ := nodeInCounts.Load(7)
-		nodeInCounts.Store(7, append(inCounts.([]string), string(in)))
-		defer func() {
-			outCounts, _ := nodeOutCounts.Load(7)
-			nodeOutCounts.Store(7, append(outCounts.([]string), string(in)))
-		}()
-		return in, nil
-	}, glow.KeyFunc(keygen))
-	if err != nil {
-		panic(err)
-	}
-
-	err = n.AddLink(node0, node4)
-	if err != nil {
-		panic(err)
-	}
-
-	err = n.AddLink(node1, node4)
-	if err != nil {
-		panic(err)
-	}
-	err = n.AddLink(node2, node3)
-	if err != nil {
-		panic(err)
-	}
-
-	err = n.AddLink(node3, node4)
-	if err != nil {
-		panic(err)
-	}
-
-	err = n.AddLink(node4, node5)
-	if err != nil {
-		panic(err)
-	}
-
-	err = n.AddLink(node4, node6)
-	if err != nil {
-		panic(err)
-	}
-
-	err = n.AddLink(node4, node7)
-	if err != nil {
-		panic(err)
-	}
+	n.AddLink(node8ID, node9ID)
+	n.AddLink(node8ID, node10ID)
 
 	return n
 }
 
+func addSeed(net *glow.Network, nodeID string, emitter bool, opt ...glow.NodeOpt) {
+	seedCounts.Store(nodeID, 0)
+	nodeInCounts.Store(nodeID, make([]int, 0))
+	nodeOutCounts.Store(nodeID, make([]int, 0))
+
+	if emitter {
+		opt = append(opt, glow.EmitterFunc(func(ctx context.Context, _ any, emit func(any)) error {
+			for {
+				select {
+				case <-ctx.Done():
+					return nil
+				default:
+					xtime.SleepWithContext(ctx, time.Duration(1)*time.Second)
+
+					num1, _ := seedCounts.Load(nodeID)
+					num := num1.(int) + 1
+
+					seedCounts.Store(nodeID, num)
+					outCounts, _ := nodeOutCounts.Load(nodeID)
+					nodeOutCounts.Store(nodeID, append(outCounts.([]int), num))
+
+					emit(num)
+				}
+			}
+		}))
+	} else {
+		opt = append(opt, glow.NodeFunc(func(ctx context.Context, _ any) (any, error) {
+			xtime.SleepWithContext(ctx, time.Duration(1)*time.Second)
+
+			num1, _ := seedCounts.Load(nodeID)
+			num := num1.(int) + 1
+
+			seedCounts.Store(nodeID, num)
+
+			defer func() {
+				outCounts, _ := nodeOutCounts.Load(nodeID)
+				nodeOutCounts.Store(nodeID, append(outCounts.([]int), num))
+			}()
+			return num, nil
+		}))
+	}
+
+	net.AddNode(append(opt, glow.Key(nodeID))...)
+}
+
+func addNode(net *glow.Network, nodeID string, emitter bool, opt ...glow.NodeOpt) {
+	nodeInCounts.Store(nodeID, make([]int, 0))
+	nodeOutCounts.Store(nodeID, make([]int, 0))
+
+	if emitter {
+		opt = append(opt, glow.EmitterFunc(func(ctx context.Context, in1 any, emit func(any)) error {
+			in := in1.(int)
+			inCounts, _ := nodeInCounts.Load(nodeID)
+			nodeInCounts.Store(nodeID, append(inCounts.([]int), in))
+
+			repeat := 0
+
+			for {
+				select {
+				case <-ctx.Done():
+					return nil
+				default:
+					emit(in)
+					outCounts, _ := nodeOutCounts.Load(nodeID)
+					nodeOutCounts.Store(nodeID, append(outCounts.([]int), in))
+					repeat++
+					if repeat == 2 {
+						return nil
+					}
+				}
+			}
+		}))
+	} else {
+		opt = append(opt, glow.NodeFunc(func(ctx context.Context, in1 any) (any, error) {
+			in := in1.(int)
+			inCounts, _ := nodeInCounts.Load(nodeID)
+			nodeInCounts.Store(nodeID, append(inCounts.([]int), in))
+			defer func() {
+				outCounts, _ := nodeOutCounts.Load(nodeID)
+				nodeOutCounts.Store(nodeID, append(outCounts.([]int), in))
+			}()
+			return in, nil
+		}))
+	}
+
+	net.AddNode(append(opt, glow.Key(nodeID))...)
+}
+
 func PrintResults() {
 	seedCounts.Range(func(k, v any) bool {
-		fmt.Printf("seedCounts[seed-%d] = %d\n", k.(int)+1, v)
+		fmt.Printf("seedCounts[seed(%s)] = %d\n", k, v)
 		return true
 	})
 
 	nodeInCounts.Range(func(k, v any) bool {
-		fmt.Printf("nodeInCounts [node-%d] = %v (%d)\n", k.(int)+1, v, len(v.([]string)))
+		fmt.Printf("nodeInCounts [%s] = %v (%d)\n", k, v, len(v.([]int)))
 		nc, _ := nodeOutCounts.Load(k)
-		fmt.Printf("nodeOutCounts[node-%d] = %v (%d)\n", k.(int)+1, nc, len(nc.([]string)))
+		fmt.Printf("nodeOutCounts[%s] = %v (%d)\n", k, nc, len(nc.([]int)))
 		return true
 	})
 }
