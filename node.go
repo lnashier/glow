@@ -227,14 +227,15 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 
 	switch {
 	case len(ingress) == 0 && len(egress) > 0:
-		n.log("Seed(%s) running", node.key)
+		n.log("Seed(%s) is running", node.key)
 
 		if node.ef != nil {
 			nodeWg, nodeCtx := errgroup.WithContext(ctx)
 			nodeDataCh := make(chan any)
 
 			nodeWg.Go(func() error {
-				// When Seed node is in emitter mod, Node function is called once.
+				// When seed-node is in emitter mod, Node emitter function is called once.
+				// Seed-node can choose to emit as many data points and exit eventually.
 				err := node.ef(nodeCtx, nil, func(nodeData any) {
 					select {
 					case <-nodeCtx.Done():
@@ -335,84 +336,97 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 			}
 		}
 	case len(ingress) > 0 && len(egress) > 0:
-		n.log("Node(%s) running", node.key)
+		n.log("Node(%s) is running", node.key)
 
 		nodeWg, nodeCtx := errgroup.WithContext(ctx)
 
 		for _, ingressLink := range ingress {
 			nodeWg.Go(func() error {
-				for {
-					select {
-					case <-nodeCtx.Done():
-						n.log("Node(%s/%s) node-ctx done for Node(%s)", node.key, ingressLink.y, ingressLink.x)
-						return nil
-					case inData := <-ingressLink.ch:
-						ingressLink.tally++
-						n.log("Node(%s/%s) Received Data(%v) From(%s)", node.key, ingressLink.y, inData, ingressLink.x)
+				if node.ef != nil {
+					inDataWg, inDataCtx := errgroup.WithContext(nodeCtx)
+					nodeDataCh := make(chan any)
 
-						if node.ef != nil {
-							inDataWg, inDataCtx := errgroup.WithContext(nodeCtx)
-							nodeDataCh := make(chan any)
+					inDataWg.Go(func() error {
+						for {
+							select {
+							case <-inDataCtx.Done():
+								n.log("Node(%s/%s) in-node-ctx done for Node(%s)", node.key, ingressLink.y, ingressLink.x)
+								return nil
+							case inData := <-ingressLink.ch:
+								ingressLink.tally++
+								n.log("Node(%s/%s) Received Data(%v) From(%s)", node.key, ingressLink.y, inData, ingressLink.x)
 
-							inDataWg.Go(func() error {
-								err := node.ef(inDataCtx, inData, func(nodeData any) {
+								// When transit-node is in emitter mod, Node emitter function is called for every incoming data point.
+								// Transit-node can choose to emit as many data points and return control back to get next incoming data point.
+								if err := node.ef(inDataCtx, inData, func(nodeData any) {
 									select {
 									case <-inDataCtx.Done():
 									case nodeDataCh <- nodeData:
 									}
-								})
-								close(nodeDataCh)
-								return err
-							})
+								}); err != nil {
+									return err
+								}
+							}
+						}
+					})
 
-							inDataWg.Go(func() error {
-								for {
+					inDataWg.Go(func() error {
+						for {
+							select {
+							case <-inDataCtx.Done():
+								n.log("Node(%s/%s) node-ctx done for Node(%s) while reading emitted data", node.key, ingressLink.y, ingressLink.x)
+								return nil
+							case nodeData, ok := <-nodeDataCh:
+								if !ok {
+									n.log("Node(%s/%s) Data Channel Closed for Node(%s)", node.key, ingressLink.y, ingressLink.x)
+									return nil
+								}
+
+								if node.distributor {
+									// Get any egress link, they all share same channel
+									egressLink := egress[0]
+									n.log("Node(%s/%s) Distributing Data(%v) Of(%s) To Nodes(%s)", node.key, egressLink.x, nodeData, ingressLink.x, egressYs)
 									select {
-									case <-inDataCtx.Done():
-										n.log("Node(%s/%s) node-ctx done for Node(%s) while reading emitted data", node.key, ingressLink.y, ingressLink.x)
+									case <-nodeCtx.Done():
+										n.log("Node(%s/%s) node-ctx done while distributing Data(%v) Of(%s) To Nodes(%s)", node.key, egressLink.x, nodeData, ingressLink.x, egressYs)
 										return nil
-									case nodeData, ok := <-nodeDataCh:
-										if !ok {
-											n.log("Node(%s/%s) Data Channel Closed for Node(%s)", node.key, ingressLink.y, ingressLink.x)
+									case egressLink.ch <- nodeData:
+										n.log("Node(%s/%s) Distributed Data(%v) Of(%s) To Nodes(%s)", node.key, egressLink.x, nodeData, ingressLink.y, egressYs)
+									}
+								} else {
+									for _, egressLink := range egress {
+										n.log("Node(%s/%s) Sending Data(%v) Of(%s) To Node(%s)", node.key, egressLink.x, nodeData, ingressLink.x, egressLink.y)
+										select {
+										case <-nodeCtx.Done():
+											n.log("Node(%s/%s) node-ctx done while sending Data(%v) Of(%s) To Node(%s)", node.key, egressLink.x, nodeData, ingressLink.x, egressLink.y)
 											return nil
-										}
-
-										if node.distributor {
-											// Get any egress link, they all share same channel
-											egressLink := egress[0]
-											n.log("Node(%s/%s) Distributing Data(%v) Of(%s) To Nodes(%s)", node.key, egressLink.x, nodeData, ingressLink.x, egressYs)
-											select {
-											case <-nodeCtx.Done():
-												n.log("Node(%s/%s) node-ctx done while distributing Data(%v) Of(%s) To Nodes(%s)", node.key, egressLink.x, nodeData, ingressLink.x, egressYs)
-												return nil
-											case egressLink.ch <- nodeData:
-												n.log("Node(%s/%s) Distributed Data(%v) Of(%s) To Nodes(%s)", node.key, egressLink.x, nodeData, ingressLink.y, egressYs)
-											}
-										} else {
-											for _, egressLink := range egress {
-												n.log("Node(%s/%s) Sending Data(%v) Of(%s) To Node(%s)", node.key, egressLink.x, nodeData, ingressLink.x, egressLink.y)
-												select {
-												case <-nodeCtx.Done():
-													n.log("Node(%s/%s) node-ctx done while sending Data(%v) Of(%s) To Node(%s)", node.key, egressLink.x, nodeData, ingressLink.x, egressLink.y)
-													return nil
-												case egressLink.ch <- nodeData:
-													n.log("Node(%s/%s) Sent Data(%v) Of(%s) To Node(%s)", node.key, egressLink.x, nodeData, ingressLink.y, egressLink.y)
-												}
-											}
+										case egressLink.ch <- nodeData:
+											n.log("Node(%s/%s) Sent Data(%v) Of(%s) To Node(%s)", node.key, egressLink.x, nodeData, ingressLink.y, egressLink.y)
 										}
 									}
 								}
-							})
-
-							if err := inDataWg.Wait(); err != nil {
-								if errors.Is(err, ErrNodeGoingAway) {
-									n.log("Node(%s/%s) %v for Node(%s)", node.key, ingressLink.y, err, ingressLink.x)
-									return nil
-								}
-								n.log("Node(%s/%s) Err: %v for Node(%s)", node.key, ingressLink.y, err, ingressLink.x)
-								return err
 							}
-						} else {
+						}
+					})
+
+					if err := inDataWg.Wait(); err != nil {
+						if errors.Is(err, ErrNodeGoingAway) {
+							n.log("Node(%s/%s) %v for Node(%s)", node.key, ingressLink.y, err, ingressLink.x)
+							return nil
+						}
+						n.log("Node(%s/%s) Err: %v for Node(%s)", node.key, ingressLink.y, err, ingressLink.x)
+						return err
+					}
+				} else {
+					for {
+						select {
+						case <-nodeCtx.Done():
+							n.log("Node(%s/%s) node-ctx done for Node(%s)", node.key, ingressLink.y, ingressLink.x)
+							return nil
+						case inData := <-ingressLink.ch:
+							ingressLink.tally++
+							n.log("Node(%s/%s) Received Data(%v) From(%s)", node.key, ingressLink.y, inData, ingressLink.x)
+
 							nodeData, nodeErr := node.f(nodeCtx, inData)
 							if nodeErr != nil {
 								if errors.Is(nodeErr, ErrNodeGoingAway) {
@@ -449,6 +463,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 						}
 					}
 				}
+				return nil
 			})
 		}
 
@@ -456,7 +471,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 			return err
 		}
 	case len(ingress) > 0 && len(egress) == 0:
-		n.log("Terminus(%s) running", node.key)
+		n.log("Terminus(%s) is running", node.key)
 
 		nodeWg, nodeCtx := errgroup.WithContext(ctx)
 
