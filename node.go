@@ -235,7 +235,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 
 			nodeWg.Go(func() error {
 				// When seed-node is in emitter mod, Node emitter function is called once.
-				// Seed-node can choose to emit as many data points and exit eventually.
+				// Seed-node can choose to emit as many data points and return eventually.
 				err := node.ef(nodeCtx, nil, func(nodeData any) {
 					select {
 					case <-nodeCtx.Done():
@@ -486,7 +486,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 						ingressLink.tally++
 						n.log("Terminus(%s/%s) Received Data(%v) From(%s)", node.key, ingressLink.y, inData, ingressLink.x)
 
-						nodeData, nodeErr := node.f(nodeCtx, inData)
+						_, nodeErr := node.f(nodeCtx, inData)
 						if nodeErr != nil {
 							if errors.Is(nodeErr, ErrNodeGoingAway) {
 								n.log("Terminus(%s/%s) %v for Node(%s)", node.key, ingressLink.y, nodeErr, ingressLink.x)
@@ -495,7 +495,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 							n.log("Terminus(%s/%s) Err: %v for Node(%s)", node.key, ingressLink.y, nodeErr, ingressLink.x)
 							return nodeErr
 						}
-						n.log("Terminus(%s/%s) Data(%v) for Node(%s)", node.key, ingressLink.y, nodeData, ingressLink.x)
+						n.log("Terminus(%s/%s) Consumed Data(%v) for Node(%s)", node.key, ingressLink.y, inData, ingressLink.x)
 					}
 				}
 			})
