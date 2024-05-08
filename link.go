@@ -1,15 +1,26 @@
 package glow
 
+import (
+	"fmt"
+	"sync"
+)
+
 // Link captures connection between two nodes.
 // Data flows from x to y over the [Link].
 type Link struct {
 	x       string
 	y       string
-	size    int
-	ch      chan any
+	ch      *channel
 	tally   int
 	paused  bool
 	deleted bool
+}
+
+type channel struct {
+	once   sync.Once
+	ch     chan any
+	size   int
+	closed bool
 }
 
 type LinkOpt func(*Link)
@@ -23,7 +34,7 @@ func (l *Link) apply(opt ...LinkOpt) {
 // Size sets bandwidth for the Link.
 func Size(k int) LinkOpt {
 	return func(l *Link) {
-		l.size = k
+		l.ch.size = k
 	}
 }
 
@@ -76,9 +87,11 @@ func (n *Network) AddLink(from, to string, opt ...LinkOpt) error {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
+	fmt.Println(from, to)
 	link := &Link{
-		x: from,
-		y: to,
+		x:  from,
+		y:  to,
+		ch: &channel{},
 	}
 	link.apply(opt...)
 
@@ -91,8 +104,9 @@ func (n *Network) AddLink(from, to string, opt ...LinkOpt) error {
 			}
 		}
 	}
-	if link.ch == nil {
-		link.ch = make(chan any, link.size)
+
+	if link.ch.ch == nil {
+		link.ch.ch = make(chan any, link.ch.size)
 	}
 
 	if _, ok := n.egress[from]; !ok {
@@ -234,11 +248,11 @@ func (n *Network) Links() []*Link {
 }
 
 // Ingress returns all the ingress links for the Node.
-func (n *Network) Ingress(k string) []*Link {
+func (n *Network) Ingress(key string) []*Link {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
 
-	ingress := n.ingress[k]
+	ingress := n.ingress[key]
 	if len(ingress) < 1 {
 		return nil
 	}
@@ -252,11 +266,11 @@ func (n *Network) Ingress(k string) []*Link {
 }
 
 // Egress returns all the egress links for the Node.
-func (n *Network) Egress(k string) []*Link {
+func (n *Network) Egress(key string) []*Link {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
 
-	egress := n.egress[k]
+	egress := n.egress[key]
 	if len(egress) < 1 {
 		return nil
 	}
@@ -267,4 +281,31 @@ func (n *Network) Egress(k string) []*Link {
 	}
 
 	return links
+}
+
+// closeEgress closes all outgoing links for the Node.
+func (n *Network) closeEgress(key string) {
+	for _, link := range n.Egress(key) {
+		link.ch.once.Do(func() {
+			close(link.ch.ch)
+			link.ch.closed = true
+		})
+	}
+}
+
+// refreshEgress opens all active outgoing links for the Node.
+func (n *Network) refreshEgress(key string) {
+	for _, link := range n.Egress(key) {
+		if link.ch.closed {
+			link.ch.closed = false
+			link.ch.once = sync.Once{}
+			link.ch.ch = make(chan any, link.ch.size)
+		}
+	}
+}
+
+func (n *Network) refreshLinks() {
+	for _, key := range n.Nodes() {
+		n.refreshEgress(key)
+	}
 }

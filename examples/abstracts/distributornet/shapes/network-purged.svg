@@ -21,7 +21,7 @@
 <text text-anchor="middle" x="33.44" y="-12.95" font-family="Times,serif" font-size="14.00">node3</text>
 </g>
 <!-- node1&#45;&gt;node3 -->
-<g id="edge1" class="edge">
+<g id="edge2" class="edge">
 <title>node1&#45;&gt;node3</title>
 <path fill="none" stroke="lightblue" d="M67.34,-88.82C61.45,-76.69 53.35,-60.02 46.55,-46"/>
 <polygon fill="lightblue" stroke="lightblue" points="49.83,-44.75 42.32,-37.28 43.54,-47.81 49.83,-44.75"/>
@@ -34,7 +34,7 @@
 <text text-anchor="middle" x="118.44" y="-12.95" font-family="Times,serif" font-size="14.00">node4</text>
 </g>
 <!-- node1&#45;&gt;node4 -->
-<g id="edge2" class="edge">
+<g id="edge1" class="edge">
 <title>node1&#45;&gt;node4</title>
 <path fill="none" stroke="gray" d="M83.73,-88.82C91.29,-73.6 102.42,-51.22 110.03,-35.92"/>
 <text text-anchor="middle" x="110.94" y="-57.2" font-family="Times,serif" font-size="14.00"> &#160;10</text>
