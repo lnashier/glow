@@ -89,6 +89,8 @@ func (n *Network) Start() error {
 
 	n.log("Nodes: %v", keys)
 
+	n.refreshLinks()
+
 	wg, ctx := errgroup.WithContext(n.session.ctx)
 
 	for _, key := range keys {
