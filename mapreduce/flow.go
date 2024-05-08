@@ -96,14 +96,9 @@ func (f *Flow) Capture(cf func(ctx context.Context, in any) error) *Flow {
 	return f
 }
 
-// Collect collects all elements in the input data stream provided by the 'Flow'
-// and aggregates them into a slice. It provides collected data points to collection function.
-// Being a terminal step in the pipeline, it does not emit data.
-func (f *Flow) Collect(cf func(in []any) error) *Flow {
-	// TODO
-	return f
-}
-
+// Run initiates the processing of data through the pipeline, starting from the
+// initial input source and sequentially applying each transformation or operation
+// defined in the pipeline until reaching the terminal step.
 func (f *Flow) Run() *Flow {
 	if f.err != nil {
 		return f
@@ -120,10 +115,12 @@ func (f *Flow) Run() *Flow {
 	return f
 }
 
+// Error retrieves any error that occurred during the building and execution of the pipeline.
 func (f *Flow) Error() error {
 	return f.err
 }
 
+// Draw generates a Graphviz (GV) visualization of the pipeline
 func (f *Flow) Draw(name string) *Flow {
 	f.appendError(help.Draw(f.net, name))
 	return f

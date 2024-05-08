@@ -20,6 +20,7 @@ The `glow` is an idiomatic computational network framework.
 - [x] Emitter mode
   - [x] Filter
 - [x] Sessions
+- [ ] Signaling
 - [x] Pause links
 - [ ] Network integrity checks
   - [x] Avoid cycles
