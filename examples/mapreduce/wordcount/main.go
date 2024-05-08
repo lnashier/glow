@@ -19,9 +19,9 @@ func main() {
 			return nil
 		}).
 		Filter(func(in any) bool {
-			return !strings.HasPrefix(in.(string), "test")
+			return strings.HasPrefix(in.(string), "test")
 		}).
-		Collect(func(ctx context.Context, in any) error {
+		Capture(func(ctx context.Context, in any) error {
 			tokens = append(tokens, in)
 			return nil
 		}).
