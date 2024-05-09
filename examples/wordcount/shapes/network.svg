@@ -8,21 +8,15 @@
  viewBox="0.00 0.00 82.88 333.50" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 329.5)">
 <polygon fill="white" stroke="none" points="-4,4 -4,-329.5 78.88,-329.5 78.88,4 -4,4"/>
-<!-- node4 -->
-<g id="node1" class="node">
-<title>node4</title>
-<ellipse fill="none" stroke="black" cx="37.44" cy="-18" rx="33.44" ry="18"/>
-<text text-anchor="middle" x="37.44" y="-12.95" font-family="Times,serif" font-size="14.00">node4</text>
-</g>
 <!-- node1 -->
-<g id="node2" class="node">
+<g id="node1" class="node">
 <title>node1</title>
 <ellipse fill="none" stroke="black" cx="37.44" cy="-303.5" rx="33.44" ry="18"/>
 <ellipse fill="none" stroke="black" cx="37.44" cy="-303.5" rx="37.44" ry="22"/>
 <text text-anchor="middle" x="37.44" y="-298.45" font-family="Times,serif" font-size="14.00">node1</text>
 </g>
 <!-- node2 -->
-<g id="node3" class="node">
+<g id="node2" class="node">
 <title>node2</title>
 <ellipse fill="none" stroke="black" cx="37.44" cy="-207" rx="33.44" ry="18"/>
 <ellipse fill="none" stroke="black" cx="37.44" cy="-207" rx="37.44" ry="22"/>
@@ -36,7 +30,7 @@
 <text text-anchor="middle" x="44.56" y="-250.2" font-family="Times,serif" font-size="14.00"> &#160;0</text>
 </g>
 <!-- node3 -->
-<g id="node4" class="node">
+<g id="node3" class="node">
 <title>node3</title>
 <ellipse fill="none" stroke="black" cx="37.44" cy="-110.5" rx="33.44" ry="18"/>
 <ellipse fill="none" stroke="black" cx="37.44" cy="-110.5" rx="37.44" ry="22"/>
@@ -48,6 +42,12 @@
 <path fill="none" stroke="lightblue" d="M37.44,-184.56C37.44,-172.59 37.44,-157.45 37.44,-144.06"/>
 <polygon fill="lightblue" stroke="lightblue" points="40.94,-144.37 37.44,-134.37 33.94,-144.37 40.94,-144.37"/>
 <text text-anchor="middle" x="44.56" y="-153.7" font-family="Times,serif" font-size="14.00"> &#160;0</text>
+</g>
+<!-- node4 -->
+<g id="node4" class="node">
+<title>node4</title>
+<ellipse fill="none" stroke="black" cx="37.44" cy="-18" rx="33.44" ry="18"/>
+<text text-anchor="middle" x="37.44" y="-12.95" font-family="Times,serif" font-size="14.00">node4</text>
 </g>
 <!-- node3&#45;&gt;node4 -->
 <g id="edge3" class="edge">

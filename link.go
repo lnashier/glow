@@ -1,7 +1,6 @@
 package glow
 
 import (
-	"fmt"
 	"sync"
 )
 
@@ -87,7 +86,6 @@ func (n *Network) AddLink(from, to string, opt ...LinkOpt) error {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
-	fmt.Println(from, to)
 	link := &Link{
 		x:  from,
 		y:  to,

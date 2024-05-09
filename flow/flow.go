@@ -1,4 +1,4 @@
-package mapreduce
+package flow
 
 import (
 	"context"
@@ -9,15 +9,16 @@ import (
 )
 
 type Flow struct {
-	net          *glow.Network
-	keygen       func() string
-	previousNode string
-	err          error
+	net       *glow.Network
+	keygen    func() string
+	preStep   *Step
+	err       error
+	callbacks []func()
 }
 
-func New() *Flow {
+func New(opt ...glow.NetworkOpt) *Flow {
 	return &Flow{
-		net:    glow.New(glow.PreventCycles(), glow.Verbose()),
+		net:    glow.New(opt...),
 		keygen: Keygen("node"),
 	}
 }
@@ -34,7 +35,10 @@ func (f *Flow) Read(rf func(ctx context.Context, emit func(any)) error) *Flow {
 		glow.KeyFunc(f.keygen),
 	)
 	f.appendError(err)
-	f.link(nodeID)
+	f.link(&Step{
+		id:   nodeID,
+		kind: ReadStep,
+	})
 	return f
 }
 
@@ -51,7 +55,10 @@ func (f *Flow) Map(mf func(ctx context.Context, in any, emit func(any)) error) *
 		glow.KeyFunc(f.keygen),
 	)
 	f.appendError(err)
-	f.link(nodeID)
+	f.link(&Step{
+		id:   nodeID,
+		kind: MapStep,
+	})
 	return f
 }
 
@@ -77,7 +84,10 @@ func (f *Flow) Filter(ff func(in any) bool) *Flow {
 		glow.KeyFunc(f.keygen),
 	)
 	f.appendError(err)
-	f.link(nodeID)
+	f.link(&Step{
+		id:   nodeID,
+		kind: FilterStep,
+	})
 	return f
 }
 
@@ -92,7 +102,27 @@ func (f *Flow) Capture(cf func(ctx context.Context, in any) error) *Flow {
 		glow.KeyFunc(f.keygen),
 	)
 	f.appendError(err)
-	f.link(nodeID)
+	f.link(&Step{
+		id:   nodeID,
+		kind: CaptureStep,
+	})
+	return f
+}
+
+func (f *Flow) Sort(cb func([]any)) *Flow {
+	// TODO
+	return f
+}
+
+func (f *Flow) Count(cb func(num int)) *Flow {
+	var tokens []any
+	f.Capture(func(ctx context.Context, in any) error {
+		tokens = append(tokens, in)
+		return nil
+	})
+	f.callbacks = append(f.callbacks, func() {
+		cb(len(tokens))
+	})
 	return f
 }
 
@@ -112,6 +142,9 @@ func (f *Flow) Run() *Flow {
 			f.appendError(err)
 		}),
 	)
+	for _, callback := range f.callbacks {
+		callback()
+	}
 	return f
 }
 
@@ -136,9 +169,17 @@ func (f *Flow) appendError(err error) {
 	}
 }
 
-func (f *Flow) link(nodeID string) {
-	if f.previousNode != "" {
-		f.appendError(f.net.AddLink(f.previousNode, nodeID))
+func (f *Flow) link(step *Step) {
+	if f.preStep != nil {
+		if step.kind == ReadStep {
+			f.appendError(fmt.Errorf("can not add read step after %s step", f.preStep.kind))
+			return
+		}
+		if f.preStep.kind == CaptureStep {
+			f.appendError(fmt.Errorf("can not add %s step after capture step", step.kind))
+			return
+		}
+		f.appendError(f.net.AddLink(f.preStep.id, step.id))
 	}
-	f.previousNode = nodeID
+	f.preStep = step
 }

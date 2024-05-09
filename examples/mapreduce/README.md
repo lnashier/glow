@@ -1,3 +1,0 @@
-# Examples
-
-[Word Count](wordcount/)
