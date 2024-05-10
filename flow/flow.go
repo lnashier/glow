@@ -12,10 +12,9 @@ import (
 type Seq struct {
 	net       *glow.Network
 	keygen    func() string
-	preStep   *Step
 	err       error
 	callbacks []func()
-	branching bool
+	preSteps  []*Step
 }
 
 func Sequential(opt ...glow.NetworkOpt) *Seq {
@@ -29,8 +28,14 @@ func Sequential(opt ...glow.NetworkOpt) *Seq {
 // The reader function is called with a context and an emit function, responsible for
 // reading data and emitting it. The emitted data can be of any type.
 // Usually, this is the first step, feeding data for processing on to subsequent steps.
-func (s *Seq) Read(rf func(ctx context.Context, emit func(any)) error) *Seq {
-	return s.seed(ReadStep, rf)
+func (s *Seq) Read(rf func(ctx context.Context, emit func(any)) error, opt ...Opt) *Seq {
+	stepOpts := &opts{}
+	stepOpts.apply(opt...)
+	step, err := s.seed(ReadStep, rf, stepOpts)
+	s.appendError(err)
+	s.link(step)
+	s.preSteps = []*Step{step}
+	return s
 }
 
 // Map applies a mapping function to each element in the input data stream.
@@ -38,18 +43,51 @@ func (s *Seq) Read(rf func(ctx context.Context, emit func(any)) error) *Seq {
 // It processes each input element and emits zero or more transformed data points using the 'emit' function.
 // The emitted data can be of any type.
 // Typically, this step is an intermediate step enabling data transformation operations.
-func (s *Seq) Map(mf func(ctx context.Context, in any, emit func(any)) error) *Seq {
-	return s.transit(MapStep, mf)
+func (s *Seq) Map(mf func(ctx context.Context, in any, emit func(any)) error, opt ...Opt) *Seq {
+	stepOpts := &opts{
+		concurrency: 1,
+	}
+	stepOpts.apply(opt...)
+
+	var steps []*Step
+
+	for range stepOpts.concurrency {
+		step, err := s.transit(MapStep, mf, stepOpts)
+		s.appendError(err)
+		steps = append(steps, step)
+		s.link(step)
+	}
+
+	s.preSteps = steps
+
+	return s
 }
 
 // Peek allows observing the data stream without modifying it, typically
 // for debugging, logging, or monitoring purposes.
 func (s *Seq) Peek(pf func(in any)) *Seq {
-	return s.transit(PeekStep, func(ctx context.Context, in any, emit func(any)) error {
+	step, err := s.transit(PeekStep, func(ctx context.Context, in any, emit func(any)) error {
 		pf(in)
 		emit(in)
 		return nil
-	})
+	}, &opts{})
+	s.appendError(err)
+	s.link(step)
+	s.preSteps = []*Step{step}
+	return s
+}
+
+// Combine combines the elements of streams into a single stream, concatenating
+// all the data points from the individual streams in the order they arrive.
+func (s *Seq) Combine() *Seq {
+	step, err := s.transit(CombineStep, func(ctx context.Context, in any, emit func(any)) error {
+		emit(in)
+		return nil
+	}, &opts{})
+	s.appendError(err)
+	s.link(step)
+	s.preSteps = []*Step{step}
+	return s
 }
 
 // Filter applies a filtering function to each element in the input data stream.
@@ -58,40 +96,67 @@ func (s *Seq) Peek(pf func(in any)) *Seq {
 // If the filtering function returns true, the element is passed through to the output stream;
 // otherwise, it is discarded.
 // This step serves as an intermediate step facilitating data filtering operations.
-func (s *Seq) Filter(ff func(in any) bool) *Seq {
-	return s.transit(FilterStep, func(ctx context.Context, in any, emit func(any)) error {
-		if ff(in) {
-			select {
-			case <-ctx.Done():
-				// return immediately
-				return nil
-			default:
-				emit(in)
+func (s *Seq) Filter(ff func(in any) bool, opt ...Opt) *Seq {
+	stepOpts := &opts{
+		concurrency: 1,
+	}
+	stepOpts.apply(opt...)
+
+	var steps []*Step
+
+	for range stepOpts.concurrency {
+		step, err := s.transit(FilterStep, func(ctx context.Context, in any, emit func(any)) error {
+			if ff(in) {
+				select {
+				case <-ctx.Done():
+					// return immediately
+					return nil
+				default:
+					emit(in)
+				}
 			}
-		}
-		return nil
-	})
+			return nil
+		}, stepOpts)
+		s.appendError(err)
+		steps = append(steps, step)
+		s.link(step)
+	}
+
+	s.preSteps = steps
+
+	return s
 }
 
 // Capture captures each element in the input data stream and feeds it to a capturing function.
 // The capturing function receives a context and captured data point.
 // Being a terminal step in the pipeline, it does not emit data.
 func (s *Seq) Capture(cf func(ctx context.Context, in any) error) *Seq {
-	return s.terminal(CaptureStep, cf)
+	step, err := s.terminal(CaptureStep, cf, &opts{})
+	s.appendError(err)
+	s.link(step)
+	s.preSteps = []*Step{step}
+	return s
 }
 
 // Collect aggregates all elements in the input data stream and provides the collection to provided callback.
 // It accepts the following options:
 //   - Compare option allows sorting the collection before passing it to the callback.
 func (s *Seq) Collect(cb func([]any), opt ...Opt) *Seq {
-	nodeOpts := &opts{}
-	nodeOpts.apply(opt...)
+	stepOpts := &opts{
+		compare: func(a any, b any) int {
+			return 0
+		},
+	}
+	stepOpts.apply(opt...)
 
 	var tokens []any
+	s.callbacks = append(s.callbacks, func() {
+		cb(tokens)
+	})
 
-	s.terminal(CollectStep, func(ctx context.Context, in any) error {
+	step, err := s.terminal(CollectStep, func(ctx context.Context, in any) error {
 		for i, token := range tokens {
-			comp := nodeOpts.compare(token, in)
+			comp := stepOpts.compare(token, in)
 			if comp > 0 {
 				tokens = append(tokens[:i+1], tokens[i:]...)
 				tokens[i] = in
@@ -100,11 +165,10 @@ func (s *Seq) Collect(cb func([]any), opt ...Opt) *Seq {
 		}
 		tokens = append(tokens, in)
 		return nil
-	})
-
-	s.callbacks = append(s.callbacks, func() {
-		cb(tokens)
-	})
+	}, stepOpts)
+	s.appendError(err)
+	s.link(step)
+	s.preSteps = []*Step{step}
 
 	return s
 }
@@ -112,13 +176,18 @@ func (s *Seq) Collect(cb func([]any), opt ...Opt) *Seq {
 // Count counts the number of elements in the input data stream.
 func (s *Seq) Count(cb func(num int)) *Seq {
 	var tokens []any
-	s.terminal(CountStep, func(ctx context.Context, in any) error {
-		tokens = append(tokens, in)
-		return nil
-	})
 	s.callbacks = append(s.callbacks, func() {
 		cb(len(tokens))
 	})
+
+	step, err := s.terminal(CountStep, func(ctx context.Context, in any) error {
+		tokens = append(tokens, in)
+		return nil
+	}, &opts{})
+	s.appendError(err)
+	s.link(step)
+	s.preSteps = []*Step{step}
+
 	return s
 }
 
@@ -156,49 +225,67 @@ func (s *Seq) Draw(name string) *Seq {
 	return s
 }
 
-func (s *Seq) seed(kind StepKind, sf func(ctx context.Context, emit func(any)) error) *Seq {
-	nodeID, err := s.net.AddNode(
+func (s *Seq) seed(kind StepKind, sf func(ctx context.Context, emit func(any)) error, opts *opts) (*Step, error) {
+	nodeOpts := []glow.NodeOpt{
 		glow.EmitterFunc(func(ctx context.Context, _ any, emit func(any)) error {
 			return sf(ctx, emit)
 		}),
-		glow.KeyFunc(s.keygen),
-	)
-	s.appendError(err)
-	s.link(&Step{
-		id:   nodeID,
-		kind: kind,
-	})
-	return s
+		glow.Key(fmt.Sprintf("%s-%s", s.keygen(), kind)),
+	}
+	if opts.distributor {
+		nodeOpts = append(nodeOpts, glow.Distributor())
+	}
+	return s.node(kind, nodeOpts...)
 }
 
-func (s *Seq) transit(kind StepKind, tf func(ctx context.Context, in any, emit func(any)) error) *Seq {
-	nodeID, err := s.net.AddNode(
+func (s *Seq) transit(kind StepKind, tf func(ctx context.Context, in any, emit func(any)) error, opts *opts) (*Step, error) {
+	nodeOpts := []glow.NodeOpt{
 		glow.EmitterFunc(func(ctx context.Context, in any, emit func(any)) error {
 			return tf(ctx, in, emit)
 		}),
-		glow.KeyFunc(s.keygen),
-	)
-	s.appendError(err)
-	s.link(&Step{
-		id:   nodeID,
-		kind: kind,
-	})
-	return s
+		glow.Key(fmt.Sprintf("%s-%s", s.keygen(), kind)),
+	}
+	if opts.distributor {
+		nodeOpts = append(nodeOpts, glow.Distributor())
+	}
+	return s.node(kind, nodeOpts...)
 }
 
-func (s *Seq) terminal(kind StepKind, tf func(ctx context.Context, in any) error) *Seq {
-	nodeID, err := s.net.AddNode(
+func (s *Seq) terminal(kind StepKind, tf func(ctx context.Context, in any) error, opts *opts) (*Step, error) {
+	nodeOpts := []glow.NodeOpt{
 		glow.NodeFunc(func(ctx context.Context, in any) (any, error) {
 			return nil, tf(ctx, in)
 		}),
-		glow.KeyFunc(s.keygen),
-	)
-	s.appendError(err)
-	s.link(&Step{
+		glow.Key(fmt.Sprintf("%s-%s", s.keygen(), kind)),
+	}
+	if opts.distributor {
+		nodeOpts = append(nodeOpts, glow.Distributor())
+	}
+	return s.node(kind, nodeOpts...)
+}
+
+func (s *Seq) node(kind StepKind, opt ...glow.NodeOpt) (*Step, error) {
+	nodeID, err := s.net.AddNode(opt...)
+	return &Step{
 		id:   nodeID,
 		kind: kind,
-	})
-	return s
+	}, err
+}
+
+func (s *Seq) link(cur *Step) {
+	for _, pre := range s.preSteps {
+		if pre != nil {
+			if slices.Contains(seedKinds, cur.kind) {
+				s.appendError(fmt.Errorf("can not add %s step after %s step", cur.kind, pre.kind))
+				return
+			}
+			if slices.Contains(terminalKinds, pre.kind) {
+				s.appendError(fmt.Errorf("can not add %s step after %s step", cur.kind, pre.kind))
+				return
+			}
+			s.appendError(s.net.AddLink(pre.id, cur.id))
+		}
+	}
 }
 
 func (s *Seq) appendError(err error) {
@@ -211,25 +298,12 @@ func (s *Seq) appendError(err error) {
 	}
 }
 
-func (s *Seq) link(step *Step) {
-	if s.preStep != nil {
-		if slices.Contains(seedKinds, step.kind) {
-			s.appendError(fmt.Errorf("can not add %s step after %s step", step.kind, s.preStep.kind))
-			return
-		}
-		if slices.Contains(terminalKinds, s.preStep.kind) {
-			s.appendError(fmt.Errorf("can not add %s step after %s step", step.kind, s.preStep.kind))
-			return
-		}
-		s.appendError(s.net.AddLink(s.preStep.id, step.id))
-	}
-	s.preStep = step
-}
-
 type Opt func(*opts)
 
 type opts struct {
-	compare func(any, any) int
+	compare     func(any, any) int
+	concurrency int
+	distributor bool
 }
 
 func (o *opts) apply(opt ...Opt) {
@@ -246,5 +320,19 @@ func (o *opts) apply(opt ...Opt) {
 func Compare(f func(a any, b any) int) Opt {
 	return func(o *opts) {
 		o.compare = f
+	}
+}
+
+func Concurrency(v int) Opt {
+	return func(o *opts) {
+		if v > 0 {
+			o.concurrency = v
+		}
+	}
+}
+
+func Distributor() Opt {
+	return func(o *opts) {
+		o.distributor = true
 	}
 }

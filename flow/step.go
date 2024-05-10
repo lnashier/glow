@@ -18,6 +18,8 @@ func (k StepKind) String() string {
 		return "count"
 	case PeekStep:
 		return "peek"
+	case CombineStep:
+		return "combine"
 	default:
 		return "unknown"
 	}
@@ -31,6 +33,7 @@ const (
 	CollectStep
 	CountStep
 	PeekStep
+	CombineStep
 )
 
 type Step struct {
@@ -46,6 +49,7 @@ var transitKinds = []StepKind{
 	MapStep,
 	FilterStep,
 	PeekStep,
+	CombineStep,
 }
 
 var terminalKinds = []StepKind{
