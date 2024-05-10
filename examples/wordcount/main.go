@@ -4,13 +4,14 @@ import (
 	"context"
 	"fmt"
 	"github.com/lnashier/glow/flow"
+	"github.com/lnashier/glow/flow/plug"
 	"strings"
 )
 
 func main() {
 	err := flow.New( /*glow.Verbose()*/ ).
 		Read(func(ctx context.Context, emit func(out any)) error {
-			return flow.FileReader("test.txt", emit)
+			return plug.ReadFile("test.txt", emit)
 		}).
 		Map(func(ctx context.Context, in any, emit func(any)) error {
 			flow.Tokenize(ctx, in.(string), emit)
