@@ -9,16 +9,17 @@ import (
 	"slices"
 )
 
-type Flow struct {
+type Seq struct {
 	net       *glow.Network
 	keygen    func() string
 	preStep   *Step
 	err       error
 	callbacks []func()
+	branching bool
 }
 
-func New(opt ...glow.NetworkOpt) *Flow {
-	return &Flow{
+func Sequential(opt ...glow.NetworkOpt) *Seq {
+	return &Seq{
 		net:    glow.New(opt...),
 		keygen: Keygen("node"),
 	}
@@ -28,8 +29,8 @@ func New(opt ...glow.NetworkOpt) *Flow {
 // The reader function is called with a context and an emit function, responsible for
 // reading data and emitting it. The emitted data can be of any type.
 // Usually, this is the first step, feeding data for processing on to subsequent steps.
-func (f *Flow) Read(rf func(ctx context.Context, emit func(any)) error) *Flow {
-	return f.seed(ReadStep, rf)
+func (s *Seq) Read(rf func(ctx context.Context, emit func(any)) error) *Seq {
+	return s.seed(ReadStep, rf)
 }
 
 // Map applies a mapping function to each element in the input data stream.
@@ -37,14 +38,14 @@ func (f *Flow) Read(rf func(ctx context.Context, emit func(any)) error) *Flow {
 // It processes each input element and emits zero or more transformed data points using the 'emit' function.
 // The emitted data can be of any type.
 // Typically, this step is an intermediate step enabling data transformation operations.
-func (f *Flow) Map(mf func(ctx context.Context, in any, emit func(any)) error) *Flow {
-	return f.transit(MapStep, mf)
+func (s *Seq) Map(mf func(ctx context.Context, in any, emit func(any)) error) *Seq {
+	return s.transit(MapStep, mf)
 }
 
 // Peek allows observing the data stream without modifying it, typically
 // for debugging, logging, or monitoring purposes.
-func (f *Flow) Peek(pf func(in any)) *Flow {
-	return f.transit(PeekStep, func(ctx context.Context, in any, emit func(any)) error {
+func (s *Seq) Peek(pf func(in any)) *Seq {
+	return s.transit(PeekStep, func(ctx context.Context, in any, emit func(any)) error {
 		pf(in)
 		emit(in)
 		return nil
@@ -57,8 +58,8 @@ func (f *Flow) Peek(pf func(in any)) *Flow {
 // If the filtering function returns true, the element is passed through to the output stream;
 // otherwise, it is discarded.
 // This step serves as an intermediate step facilitating data filtering operations.
-func (f *Flow) Filter(ff func(in any) bool) *Flow {
-	return f.transit(FilterStep, func(ctx context.Context, in any, emit func(any)) error {
+func (s *Seq) Filter(ff func(in any) bool) *Seq {
+	return s.transit(FilterStep, func(ctx context.Context, in any, emit func(any)) error {
 		if ff(in) {
 			select {
 			case <-ctx.Done():
@@ -75,20 +76,20 @@ func (f *Flow) Filter(ff func(in any) bool) *Flow {
 // Capture captures each element in the input data stream and feeds it to a capturing function.
 // The capturing function receives a context and captured data point.
 // Being a terminal step in the pipeline, it does not emit data.
-func (f *Flow) Capture(cf func(ctx context.Context, in any) error) *Flow {
-	return f.terminal(CaptureStep, cf)
+func (s *Seq) Capture(cf func(ctx context.Context, in any) error) *Seq {
+	return s.terminal(CaptureStep, cf)
 }
 
 // Collect aggregates all elements in the input data stream and provides the collection to provided callback.
 // It accepts the following options:
 //   - Compare option allows sorting the collection before passing it to the callback.
-func (f *Flow) Collect(cb func([]any), opt ...Opt) *Flow {
+func (s *Seq) Collect(cb func([]any), opt ...Opt) *Seq {
 	nodeOpts := &opts{}
 	nodeOpts.apply(opt...)
 
 	var tokens []any
 
-	f.terminal(CollectStep, func(ctx context.Context, in any) error {
+	s.terminal(CollectStep, func(ctx context.Context, in any) error {
 		for i, token := range tokens {
 			comp := nodeOpts.compare(token, in)
 			if comp > 0 {
@@ -101,128 +102,128 @@ func (f *Flow) Collect(cb func([]any), opt ...Opt) *Flow {
 		return nil
 	})
 
-	f.callbacks = append(f.callbacks, func() {
+	s.callbacks = append(s.callbacks, func() {
 		cb(tokens)
 	})
 
-	return f
+	return s
 }
 
 // Count counts the number of elements in the input data stream.
-func (f *Flow) Count(cb func(num int)) *Flow {
+func (s *Seq) Count(cb func(num int)) *Seq {
 	var tokens []any
-	f.terminal(CountStep, func(ctx context.Context, in any) error {
+	s.terminal(CountStep, func(ctx context.Context, in any) error {
 		tokens = append(tokens, in)
 		return nil
 	})
-	f.callbacks = append(f.callbacks, func() {
+	s.callbacks = append(s.callbacks, func() {
 		cb(len(tokens))
 	})
-	return f
+	return s
 }
 
 // Run initiates the processing of data through the pipeline, starting from the
 // initial input source and sequentially applying each operation
 // defined in the pipeline until reaching the terminal step.
-func (f *Flow) Run() *Flow {
-	if f.err != nil {
-		return f
+func (s *Seq) Run() *Seq {
+	if s.err != nil {
+		return s
 	}
 	goarc.Up(
-		f.net,
+		s.net,
 		goarc.OnStart(func(err error) {
-			f.appendError(err)
+			s.appendError(err)
 		}),
 		goarc.OnStop(func(err error) {
-			f.appendError(err)
+			s.appendError(err)
 		}),
 	)
-	for _, callback := range f.callbacks {
+	for _, callback := range s.callbacks {
 		callback()
 	}
-	return f
+	return s
 }
 
 // Error retrieves any error that occurred during the building
 // and execution of the pipeline.
-func (f *Flow) Error() error {
-	return f.err
+func (s *Seq) Error() error {
+	return s.err
 }
 
 // Draw generates a Graphviz visualization of the Flow.
-func (f *Flow) Draw(name string) *Flow {
-	f.appendError(help.Draw(f.net, name))
-	return f
+func (s *Seq) Draw(name string) *Seq {
+	s.appendError(help.Draw(s.net, name))
+	return s
 }
 
-func (f *Flow) seed(kind StepKind, sf func(ctx context.Context, emit func(any)) error) *Flow {
-	nodeID, err := f.net.AddNode(
+func (s *Seq) seed(kind StepKind, sf func(ctx context.Context, emit func(any)) error) *Seq {
+	nodeID, err := s.net.AddNode(
 		glow.EmitterFunc(func(ctx context.Context, _ any, emit func(any)) error {
 			return sf(ctx, emit)
 		}),
-		glow.KeyFunc(f.keygen),
+		glow.KeyFunc(s.keygen),
 	)
-	f.appendError(err)
-	f.link(&Step{
+	s.appendError(err)
+	s.link(&Step{
 		id:   nodeID,
 		kind: kind,
 	})
-	return f
+	return s
 }
 
-func (f *Flow) transit(kind StepKind, tf func(ctx context.Context, in any, emit func(any)) error) *Flow {
-	nodeID, err := f.net.AddNode(
+func (s *Seq) transit(kind StepKind, tf func(ctx context.Context, in any, emit func(any)) error) *Seq {
+	nodeID, err := s.net.AddNode(
 		glow.EmitterFunc(func(ctx context.Context, in any, emit func(any)) error {
 			return tf(ctx, in, emit)
 		}),
-		glow.KeyFunc(f.keygen),
+		glow.KeyFunc(s.keygen),
 	)
-	f.appendError(err)
-	f.link(&Step{
+	s.appendError(err)
+	s.link(&Step{
 		id:   nodeID,
 		kind: kind,
 	})
-	return f
+	return s
 }
 
-func (f *Flow) terminal(kind StepKind, tf func(ctx context.Context, in any) error) *Flow {
-	nodeID, err := f.net.AddNode(
+func (s *Seq) terminal(kind StepKind, tf func(ctx context.Context, in any) error) *Seq {
+	nodeID, err := s.net.AddNode(
 		glow.NodeFunc(func(ctx context.Context, in any) (any, error) {
 			return nil, tf(ctx, in)
 		}),
-		glow.KeyFunc(f.keygen),
+		glow.KeyFunc(s.keygen),
 	)
-	f.appendError(err)
-	f.link(&Step{
+	s.appendError(err)
+	s.link(&Step{
 		id:   nodeID,
 		kind: kind,
 	})
-	return f
+	return s
 }
 
-func (f *Flow) appendError(err error) {
+func (s *Seq) appendError(err error) {
 	if err != nil {
-		if f.err != nil {
-			f.err = fmt.Errorf("%w %w", f.err, err)
+		if s.err != nil {
+			s.err = fmt.Errorf("%w %w", s.err, err)
 		} else {
-			f.err = err
+			s.err = err
 		}
 	}
 }
 
-func (f *Flow) link(step *Step) {
-	if f.preStep != nil {
+func (s *Seq) link(step *Step) {
+	if s.preStep != nil {
 		if slices.Contains(seedKinds, step.kind) {
-			f.appendError(fmt.Errorf("can not add %s step after %s step", step.kind, f.preStep.kind))
+			s.appendError(fmt.Errorf("can not add %s step after %s step", step.kind, s.preStep.kind))
 			return
 		}
-		if slices.Contains(terminalKinds, f.preStep.kind) {
-			f.appendError(fmt.Errorf("can not add %s step after %s step", step.kind, f.preStep.kind))
+		if slices.Contains(terminalKinds, s.preStep.kind) {
+			s.appendError(fmt.Errorf("can not add %s step after %s step", step.kind, s.preStep.kind))
 			return
 		}
-		f.appendError(f.net.AddLink(f.preStep.id, step.id))
+		s.appendError(s.net.AddLink(s.preStep.id, step.id))
 	}
-	f.preStep = step
+	s.preStep = step
 }
 
 type Opt func(*opts)

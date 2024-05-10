@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	err := flow.New( /*glow.Verbose()*/ ).
+	err := flow.Sequential( /*glow.Verbose()*/ ).
 		Read(func(ctx context.Context, emit func(out any)) error {
 			for range 50 {
 				select {

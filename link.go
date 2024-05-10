@@ -17,9 +17,9 @@ type Link struct {
 
 type channel struct {
 	once   sync.Once
+	closed bool
 	ch     chan any
 	size   int
-	closed bool
 }
 
 type LinkOpt func(*Link)

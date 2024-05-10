@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	err := flow.New( /*glow.Verbose()*/ ).
+	err := flow.Sequential( /*glow.Verbose()*/ ).
 		Read(func(ctx context.Context, emit func(out any)) error {
 			return plug.ReadFile("test.txt", emit)
 		}).
