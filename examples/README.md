@@ -1,8 +1,8 @@
 # Examples
 
-[Abstract Examples](abstracts)
+[Abstracts](abstracts)
 
-[Sort](sort/)
+[Collect Random Integers Stream Sorted](randomints/)
 
-[Word Count](wordcount/)
+[Count Word In File](wordcount/)
 

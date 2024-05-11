@@ -15,7 +15,7 @@ func main() {
 			return plug.ReadFile("test.txt", emit)
 		}).
 		Map(func(ctx context.Context, in any, emit func(any)) error {
-			flow.Tokenize(ctx, in.(string), emit)
+			plug.Tokenize(ctx, in.(string), emit)
 			return nil
 		}).
 		Filter(func(in any) bool {

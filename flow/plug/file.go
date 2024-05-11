@@ -2,6 +2,7 @@ package plug
 
 import (
 	"bufio"
+	"context"
 	"io"
 	"os"
 )
@@ -9,7 +10,7 @@ import (
 // StepReadFile reads len bytes from file and calls provided emit function.
 // If exact flag is set, it reads exactly len bytes from file.
 // An error is returned if fewer than len bytes were read.
-func StepReadFile(name string, len int, exact bool, emit func([]byte) error) error {
+func StepReadFile(ctx context.Context, name string, len int, exact bool, emit func([]byte) error) error {
 	f, err := os.Open(name)
 	if err != nil {
 		return err
@@ -24,31 +25,35 @@ func StepReadFile(name string, len int, exact bool, emit func([]byte) error) err
 		rf = func(r io.Reader) (int, []byte, error) {
 			buf := make([]byte, len)
 			n, err := io.ReadFull(r, buf)
-			return n, buf[:n], err
+			return n, buf, err
 		}
 	default:
 		rf = func(r io.Reader) (int, []byte, error) {
 			buf := make([]byte, len)
 			n, err := r.Read(buf)
-			return n, buf, err
+			return n, buf[:n], err
 		}
 	}
 
 	for {
-		n, buf, err := rf(r)
-		if n > 0 {
-			if err = emit(buf); err != nil {
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+			n, buf, err := rf(r)
+			if n > 0 {
+				if err = emit(buf); err != nil {
+					return err
+				}
+			}
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
 				return err
 			}
 		}
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return err
-		}
 	}
-	return nil
 }
 
 // ReadFile read the entire file and calls provided emit function.
