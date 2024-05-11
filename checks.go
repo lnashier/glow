@@ -34,7 +34,7 @@ func dfs(n *Network, root string, callback func(string) bool) {
 			visited[node] = true
 
 			for _, link := range n.ingress[node] {
-				stack = append(stack, link.x)
+				stack = append(stack, link.x.Key())
 			}
 		}
 	}

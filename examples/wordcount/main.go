@@ -6,6 +6,7 @@ import (
 	"github.com/lnashier/glow/flow"
 	"github.com/lnashier/glow/flow/plug"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -25,6 +26,9 @@ func main() {
 		}).
 		Draw("bin/network.gv").
 		Run().
+		Uptime(func(d time.Duration) {
+			fmt.Println(d)
+		}).
 		Draw("bin/network-tally.gv").
 		Error()
 

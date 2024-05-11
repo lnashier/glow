@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/lnashier/glow/flow"
 	"math/rand"
+	"time"
 )
 
 func main() {
@@ -33,6 +34,9 @@ func main() {
 		).
 		Draw("bin/network.gv").
 		Run().
+		Uptime(func(d time.Duration) {
+			fmt.Println(d)
+		}).
 		Draw("bin/network-tally.gv").
 		Error()
 

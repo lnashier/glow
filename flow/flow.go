@@ -7,6 +7,7 @@ import (
 	"github.com/lnashier/glow/help"
 	"github.com/lnashier/goarc"
 	"slices"
+	"time"
 )
 
 type Seq struct {
@@ -213,16 +214,21 @@ func (s *Seq) Run() *Seq {
 	return s
 }
 
-// Error retrieves any error that occurred during the building
-// and execution of the pipeline.
-func (s *Seq) Error() error {
-	return s.err
-}
-
 // Draw generates a Graphviz visualization of the Flow.
 func (s *Seq) Draw(name string) *Seq {
 	s.appendError(help.Draw(s.net, name))
 	return s
+}
+
+func (s *Seq) Uptime(uf func(d time.Duration)) *Seq {
+	uf(s.net.Uptime())
+	return s
+}
+
+// Error retrieves any error that occurred during the building
+// and execution of the pipeline.
+func (s *Seq) Error() error {
+	return s.err
 }
 
 func (s *Seq) seed(kind StepKind, sf func(ctx context.Context, emit func(any)) error, opts *opts) (*Step, error) {
