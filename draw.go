@@ -8,7 +8,7 @@ import (
 const tmpl = `strict digraph {
     node [shape=ellipse]
 	{{ range .Nodes -}}
-        "{{ . }}"
+		"{{ .Key }}"
 		[
 			style="{{ nodeProp "style" . }}",
 			fillcolor="{{ nodeProp "color" . }}"
@@ -16,7 +16,7 @@ const tmpl = `strict digraph {
 		];
     {{ end -}}
     {{ range .Links -}}
-        "{{ .From }}" -> "{{ .To }}"
+        "{{ .From.Key }}" -> "{{ .To.Key }}"
 		[
 			label="  {{ .Tally }}",
 			color="{{ linkProp "color" . }}"
@@ -29,9 +29,8 @@ const tmpl = `strict digraph {
 func DOT(n *Network) ([]byte, error) {
 	t := template.New("tmpl")
 	t.Funcs(template.FuncMap{
-		"nodeProp": func(prop string, k string) any {
-			node, _ := n.Node(k)
-			egress := n.Egress(k)
+		"nodeProp": func(prop string, node *Node) any {
+			egress := n.Egress(node.Key())
 
 			switch prop {
 			case "peripheries":

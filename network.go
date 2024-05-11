@@ -72,6 +72,11 @@ func (n *Network) Start() error {
 	defer n.session.mu.Unlock()
 	defer n.log("Network shut down")
 
+	n.session.start = time.Now()
+	n.session.stop = time.Time{} //unset
+	defer func() {
+		n.session.stop = time.Now()
+	}()
 	n.session.ctx, n.session.cancel = context.WithCancel(context.Background())
 	if n.stopGracetime > 0 {
 		cancel1 := n.session.cancel
@@ -82,23 +87,19 @@ func (n *Network) Start() error {
 		}
 	}
 
-	keys := n.Nodes()
-	if len(keys) == 0 {
+	n.refreshNodes()
+
+	nodes := n.Nodes()
+	if len(nodes) == 0 {
 		return ErrEmptyNetwork
 	}
 
-	n.log("Nodes: %v", keys)
-
-	n.refreshLinks()
+	n.log("Nodes: %d", len(nodes))
 
 	wg, ctx := errgroup.WithContext(n.session.ctx)
 
-	for _, key := range keys {
+	for _, node := range nodes {
 		wg.Go(func() error {
-			node, err := n.Node(key)
-			if err != nil {
-				return err
-			}
 			return n.nodeUp(ctx, node)
 		})
 	}
@@ -124,7 +125,7 @@ func (n *Network) Purge() error {
 	n.session.mu.RLock()
 	defer n.session.mu.RUnlock()
 
-	keys := n.Nodes()
+	keys := n.Keys()
 	links := n.Links()
 
 	n.mu.Lock()
@@ -133,7 +134,7 @@ func (n *Network) Purge() error {
 	// clean up removed links
 	for _, link := range links {
 		if link.deleted {
-			err := n.removeLink(link.x, link.y)
+			err := n.removeLink(link)
 			if err != nil {
 				return err
 			}
@@ -159,8 +160,20 @@ func (n *Network) apply(opt ...NetworkOpt) {
 	}
 }
 
+func (n *Network) Uptime() time.Duration {
+	if n.session.start.IsZero() {
+		return 0
+	}
+	if n.session.stop.IsZero() {
+		return time.Since(n.session.start)
+	}
+	return n.session.stop.Sub(n.session.start)
+}
+
 type session struct {
 	mu     *sync.RWMutex
 	ctx    context.Context
 	cancel func()
+	start  time.Time
+	stop   time.Time
 }

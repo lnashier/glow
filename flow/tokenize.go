@@ -1,4 +1,4 @@
-package mapreduce
+package flow
 
 import (
 	"context"

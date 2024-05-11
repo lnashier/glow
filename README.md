@@ -3,7 +3,7 @@
 [![GoDoc](https://pkg.go.dev/badge/github.com/lnashier/glow)](https://pkg.go.dev/github.com/lnashier/glow)
 [![Go Report Card](https://goreportcard.com/badge/github.com/lnashier/glow)](https://goreportcard.com/report/github.com/lnashier/glow)
 
-The `glow` is an idiomatic computational network framework.
+The `glow` is an idiomatic general purpose computational network framework.
 
 ## Examples
 
@@ -20,7 +20,7 @@ The `glow` is an idiomatic computational network framework.
 - [x] Emitter mode
   - [x] Filter
 - [x] Sessions
-- [ ] Signaling
+- [x] Signaling
 - [x] Pause links
 - [ ] Network integrity checks
   - [x] Avoid cycles

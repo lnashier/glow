@@ -1,15 +1,15 @@
 package glow
 
 import (
-	"fmt"
 	"sync"
+	"time"
 )
 
 // Link captures connection between two nodes.
 // Data flows from x to y over the [Link].
 type Link struct {
-	x       string
-	y       string
+	x       *Node
+	y       *Node
 	ch      *channel
 	tally   int
 	paused  bool
@@ -18,9 +18,9 @@ type Link struct {
 
 type channel struct {
 	once   sync.Once
+	closed bool
 	ch     chan any
 	size   int
-	closed bool
 }
 
 type LinkOpt func(*Link)
@@ -39,18 +39,36 @@ func Size(k int) LinkOpt {
 }
 
 // From returns the key of the "from" Node connected by this link.
-func (l *Link) From() string {
+func (l *Link) From() *Node {
 	return l.x
 }
 
 // To returns the key of the "to" Node connected by this link.
-func (l *Link) To() string {
+func (l *Link) To() *Node {
 	return l.y
 }
 
 // Tally returns the total count of data transmitted over the link thus far.
 func (l *Link) Tally() int {
 	return l.tally
+}
+
+func (l *Link) Uptime() time.Duration {
+	if l.deleted || l.paused {
+		return 0
+	}
+	if !l.x.start.IsZero() && !l.y.start.IsZero() {
+		stop := l.x.stop
+		if stop.IsZero() {
+			stop = l.y.stop
+		}
+		if stop.IsZero() {
+			stop = time.Now()
+		}
+		return stop.Sub(l.y.start)
+	}
+
+	return 0
 }
 
 // AddLink connects from-node to to-node.
@@ -71,7 +89,7 @@ func (n *Network) AddLink(from, to string, opt ...LinkOpt) error {
 	if err != nil {
 		return err
 	}
-	_, err = n.Node(to)
+	yNode, err := n.Node(to)
 	if err != nil {
 		return err
 	}
@@ -87,17 +105,16 @@ func (n *Network) AddLink(from, to string, opt ...LinkOpt) error {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
-	fmt.Println(from, to)
 	link := &Link{
-		x:  from,
-		y:  to,
+		x:  xNode,
+		y:  yNode,
 		ch: &channel{},
 	}
 	link.apply(opt...)
 
 	if xNode.distributor {
 		// if there exists another egress for node-x then get existing channel
-		if xEgress := n.egress[xNode.key]; len(xEgress) > 0 {
+		if xEgress := n.egress[xNode.Key()]; len(xEgress) > 0 {
 			for _, xLink := range xEgress {
 				link.ch = xLink.ch
 				break
@@ -145,13 +162,9 @@ func (n *Network) RemoveLink(from, to string) error {
 	return nil
 }
 
-func (n *Network) removeLink(from, to string) error {
-	_, err := n.link(from, to)
-	if err != nil {
-		return err
-	}
-	delete(n.ingress[to], from)
-	delete(n.egress[from], to)
+func (n *Network) removeLink(l *Link) error {
+	delete(n.ingress[l.y.Key()], l.x.Key())
+	delete(n.egress[l.x.Key()], l.y.Key())
 	return nil
 }
 
@@ -293,9 +306,8 @@ func (n *Network) closeEgress(key string) {
 	}
 }
 
-// refreshEgress opens all active outgoing links for the Node.
-func (n *Network) refreshEgress(key string) {
-	for _, link := range n.Egress(key) {
+func (n *Network) refreshLinks(node *Node) {
+	for _, link := range n.Egress(node.Key()) {
 		if link.ch.closed {
 			link.ch.closed = false
 			link.ch.once = sync.Once{}
@@ -304,8 +316,10 @@ func (n *Network) refreshEgress(key string) {
 	}
 }
 
-func (n *Network) refreshLinks() {
-	for _, key := range n.Nodes() {
-		n.refreshEgress(key)
+func (n *Network) refreshNodes() {
+	for _, node := range n.Nodes() {
+		node.start = time.Time{}
+		node.stop = time.Time{}
+		n.refreshLinks(node)
 	}
 }
