@@ -57,15 +57,15 @@ func (l *Link) Uptime() time.Duration {
 	if l.deleted || l.paused {
 		return 0
 	}
-	if !l.x.start.IsZero() && !l.y.start.IsZero() {
-		stop := l.x.stop
+	if !l.x.session.start.IsZero() && !l.y.session.start.IsZero() {
+		stop := l.x.session.stop
 		if stop.IsZero() {
-			stop = l.y.stop
+			stop = l.y.session.stop
 		}
 		if stop.IsZero() {
 			stop = time.Now()
 		}
-		return stop.Sub(l.y.start)
+		return stop.Sub(l.y.session.start)
 	}
 
 	return 0
@@ -313,13 +313,5 @@ func (n *Network) refreshLinks(node *Node) {
 			link.ch.once = sync.Once{}
 			link.ch.ch = make(chan any, link.ch.size)
 		}
-	}
-}
-
-func (n *Network) refreshNodes() {
-	for _, node := range n.Nodes() {
-		node.start = time.Time{}
-		node.stop = time.Time{}
-		n.refreshLinks(node)
 	}
 }

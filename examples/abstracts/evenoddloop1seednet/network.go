@@ -86,7 +86,7 @@ func Network() *glow.Network {
 	node1ID := keygen()
 	nodeInCounts.Store(node1ID, make([]int, 0))
 	nodeOutCounts.Store(node1ID, make([]int, 0))
-	n.AddNode(glow.EmitterFunc(func(ctx context.Context, in1 any, emit func(any)) error {
+	n.AddNode(glow.EmitFunc(func(ctx context.Context, in1 any, emit func(any)) error {
 		in := in1.(int)
 		inCounts, _ := nodeInCounts.Load(node1ID)
 		nodeInCounts.Store(node1ID, append(inCounts.([]int), in))
@@ -107,7 +107,7 @@ func Network() *glow.Network {
 	node2ID := keygen()
 	nodeInCounts.Store(node2ID, make([]int, 0))
 	nodeOutCounts.Store(node2ID, make([]int, 0))
-	n.AddNode(glow.EmitterFunc(func(ctx context.Context, in1 any, emit func(any)) error {
+	n.AddNode(glow.EmitFunc(func(ctx context.Context, in1 any, emit func(any)) error {
 		in := in1.(int)
 		inCounts, _ := nodeInCounts.Load(node2ID)
 		nodeInCounts.Store(node2ID, append(inCounts.([]int), in))

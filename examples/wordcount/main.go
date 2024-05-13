@@ -15,6 +15,9 @@ func main() {
 			return plug.ReadFile("test.txt", emit)
 		}).
 		Map(func(ctx context.Context, in any, emit func(any)) error {
+			// Receiver function (method) cannot have type parameters.
+			// This is the cleanest way at this moment.
+			// https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md#no-parameterized-methods
 			plug.Tokenize(ctx, in.(string), emit)
 			return nil
 		}).

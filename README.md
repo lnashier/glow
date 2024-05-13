@@ -16,7 +16,7 @@ The `glow` is an idiomatic general purpose computational network framework.
 - [x] Transit node
 - [x] Broadcaster mode
 - [x] Distributor mode
-- [ ] Router mode
+- [ ] ~~Router mode~~
 - [x] Emitter mode
   - [x] Filter
 - [x] Sessions
@@ -25,9 +25,8 @@ The `glow` is an idiomatic general purpose computational network framework.
 - [ ] Network integrity checks
   - [x] Avoid cycles
   - [x] Isolated nodes
-- [ ] Statistics
-  - [x] Tally
-  - [ ] ~~Most & least used path~~
-  - [ ] Node response time
+- [x] Link tally
+- [ ] ~~Most & least used paths~~
+- [ ] ~~Fastest & slowest paths~~
 - [ ] ~~Network modifications while network is up (e.g. Remove link, Add Link)~~
 - [ ] ~~ACK~~
