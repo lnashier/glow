@@ -233,7 +233,7 @@ func (s *Seq) Error() error {
 
 func (s *Seq) seed(kind StepKind, sf func(ctx context.Context, emit func(any)) error, opts *opts) (*Step, error) {
 	nodeOpts := []glow.NodeOpt{
-		glow.EmitterFunc(func(ctx context.Context, _ any, emit func(any)) error {
+		glow.EmitFunc(func(ctx context.Context, _ any, emit func(any)) error {
 			return sf(ctx, emit)
 		}),
 		glow.Key(fmt.Sprintf("%s-%s", s.keygen(), kind)),
@@ -246,7 +246,7 @@ func (s *Seq) seed(kind StepKind, sf func(ctx context.Context, emit func(any)) e
 
 func (s *Seq) transit(kind StepKind, tf func(ctx context.Context, in any, emit func(any)) error, opts *opts) (*Step, error) {
 	nodeOpts := []glow.NodeOpt{
-		glow.EmitterFunc(func(ctx context.Context, in any, emit func(any)) error {
+		glow.EmitFunc(func(ctx context.Context, in any, emit func(any)) error {
 			return tf(ctx, in, emit)
 		}),
 		glow.Key(fmt.Sprintf("%s-%s", s.keygen(), kind)),

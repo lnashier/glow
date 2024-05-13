@@ -23,33 +23,36 @@ import (
 //     In broadcaster mode, Node broadcasts all incoming data to all outgoing links.
 //     When the distributor flag is enabled, a Node distributes incoming data among its outgoing links.
 //     Distributor mode is not functional for isolated and terminus nodes.
-//   - By default, a Node operates in "push-pull" mode, where the Network pushes data to NodeFunc and waits for NodeFunc to return.
-//     This behavior can be changed to "push-push" by setting the emitter setting for the Node.
-//     In emitter mode, the Network pushes data to NodeFunc, and the Node emits data back to the Network through the supplied channel.
-//     Emitter mode is not functional for isolated and terminus nodes.
+//   - By default, a Node operates in "push-pull" mode: the Network pushes data to NodeFunc,
+//     and it waits for NodeFunc to return with output data, which is then forwarded to connected Node(s).
+//     This behavior can be changed to "push-push" by setting the EmitFunc for the Node.
+//     In emitter mode, the Network pushes data to EmitFunc, and the Node emits data back to the Network
+//     through the supplied callback emit function.
 type Node struct {
 	key         string
 	f           func(context.Context, any) (any, error)
 	ef          func(context.Context, any, func(any)) error
 	distributor bool
+	session     nodeSession
+}
 
-	// session
+type nodeSession struct {
 	start time.Time
 	stop  time.Time
 }
+
+type NodeOpt func(*Node)
 
 func (n *Node) Key() string {
 	return n.key
 }
 
 func (n *Node) Uptime() time.Duration {
-	if n.stop.IsZero() {
-		return time.Since(n.start)
+	if n.session.stop.IsZero() {
+		return time.Since(n.session.start)
 	}
-	return n.stop.Sub(n.start)
+	return n.session.stop.Sub(n.session.start)
 }
-
-type NodeOpt func(*Node)
 
 func (n *Node) apply(opt ...NodeOpt) {
 	for _, o := range opt {
@@ -71,21 +74,25 @@ func Key(k string) NodeOpt {
 	}
 }
 
+// Distributor enables a Node to distribute incoming data among its outgoing links.
 func Distributor() NodeOpt {
 	return func(n *Node) {
 		n.distributor = true
 	}
 }
 
-// NodeFunc is the function responsible for processing incoming data on the Node.
+// NodeFunc is responsible for processing incoming data on the Node.
+// Output from the Node is forwarded to downstream connected Node(s).
 func NodeFunc(f func(ctx context.Context, data any) (any, error)) NodeOpt {
 	return func(n *Node) {
 		n.f = f
 	}
 }
 
-// EmitterFunc is similar to NodeFunc, but it additionally provides a callback where data can be emitted.
-func EmitterFunc(f func(ctx context.Context, data any, emit func(any)) error) NodeOpt {
+// EmitFunc handles processing incoming data on the Node.
+// It provides a callback where output data can be optionally emitted.
+// Emitted data is forwarded to downstream connected Node(s).
+func EmitFunc(f func(ctx context.Context, data any, emit func(any)) error) NodeOpt {
 	return func(n *Node) {
 		n.ef = f
 	}
@@ -241,10 +248,10 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 		return ErrIsolatedNodeFound
 	}
 
-	node.start = time.Now()
-	node.stop = time.Time{}
+	node.session.start = time.Now()
+	node.session.stop = time.Time{}
 	defer func() {
-		node.stop = time.Now()
+		node.session.stop = time.Now()
 	}()
 
 	var egressYs string
@@ -359,7 +366,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 
 		nodeWg, nodeCtx := errgroup.WithContext(ctx)
 
-		// When transit-node is in emitter mod, Node emitter function is called for every incoming data point.
+		// When transit-node is in emitter mode, Node emitter function is called for every incoming data point.
 		// Transit-node can choose to emit as many data points and return control back to get next incoming data point.
 		nf := node.ef
 		if nf == nil {
@@ -513,4 +520,11 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 	}
 
 	return nil
+}
+
+func (n *Network) refreshNodes() {
+	for _, node := range n.Nodes() {
+		node.session = nodeSession{}
+		n.refreshLinks(node)
+	}
 }

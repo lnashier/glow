@@ -99,7 +99,7 @@ func addSeed(net *glow.Network, nodeID string, emitter bool, opt ...glow.NodeOpt
 	nodeOutCounts.Store(nodeID, make([]int, 0))
 
 	if emitter {
-		opt = append(opt, glow.EmitterFunc(func(ctx context.Context, _ any, emit func(any)) error {
+		opt = append(opt, glow.EmitFunc(func(ctx context.Context, _ any, emit func(any)) error {
 			for {
 				select {
 				case <-ctx.Done():
@@ -143,7 +143,7 @@ func addNode(net *glow.Network, nodeID string, emitter bool, opt ...glow.NodeOpt
 	nodeOutCounts.Store(nodeID, make([]int, 0))
 
 	if emitter {
-		opt = append(opt, glow.EmitterFunc(func(ctx context.Context, in1 any, emit func(any)) error {
+		opt = append(opt, glow.EmitFunc(func(ctx context.Context, in1 any, emit func(any)) error {
 			in := in1.(int)
 			inCounts, _ := nodeInCounts.Load(nodeID)
 			nodeInCounts.Store(nodeID, append(inCounts.([]int), in))
