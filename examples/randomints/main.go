@@ -4,14 +4,26 @@ import (
 	"context"
 	"fmt"
 	"github.com/lnashier/glow/flow"
+	"github.com/lnashier/goarc"
 	"math/rand"
 	"time"
 )
 
 func main() {
-	err := flow.Sequential( /*glow.Verbose()*/ ).
+	seq := flow.Sequential( /*glow.Verbose()*/ )
+
+	// Add a hook to listen to exit signal
+	goarc.Up(goarc.ServiceFunc(func(starting bool) error {
+		if !starting {
+			seq.Stop()
+		}
+		return nil
+	}))
+
+	err := seq.
 		Read(func(ctx context.Context, emit func(out any)) error {
 			for range 50 {
+				time.Sleep(1 * time.Second)
 				select {
 				case <-ctx.Done():
 					return nil
@@ -33,7 +45,7 @@ func main() {
 			}),
 		).
 		Draw("bin/network.gv").
-		Run().
+		Run(context.Background()).
 		Uptime(func(d time.Duration) {
 			fmt.Println(d)
 		}).

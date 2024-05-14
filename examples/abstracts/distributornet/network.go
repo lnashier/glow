@@ -36,7 +36,12 @@ func Run() {
 	}()
 
 	fmt.Println("Starting network")
-	goarc.Up(net)
+	goarc.Up(goarc.ServiceFunc(func(starting bool) error {
+		if starting {
+			return net.Start(context.Background())
+		}
+		return net.Stop()
+	}))
 	fmt.Println("Stopped network")
 
 	PrintResults()
@@ -66,7 +71,12 @@ func Run() {
 	}()
 
 	fmt.Println("Starting modified network")
-	goarc.Up(net)
+	goarc.Up(goarc.ServiceFunc(func(starting bool) error {
+		if starting {
+			return net.Start(context.Background())
+		}
+		return net.Stop()
+	}))
 	fmt.Println("Stopped modified network")
 
 	fmt.Println("Saving modified network after rerun")
@@ -81,7 +91,12 @@ func Run() {
 	fmt.Println("Saved undone network")
 
 	fmt.Println("Starting undone network")
-	goarc.Up(net)
+	goarc.Up(goarc.ServiceFunc(func(starting bool) error {
+		if starting {
+			return net.Start(context.Background())
+		}
+		return net.Stop()
+	}))
 	fmt.Println("Stopped undone network")
 
 	fmt.Println("Saving undone network after rerun")
@@ -193,9 +208,9 @@ func modify(net *glow.Network, undo bool) {
 		help.Draw(net, "bin/network-purged.gv")
 		fmt.Println("Saved purged network")
 
-		fmt.Printf("Adding node %s %s\n", node2ID)
+		fmt.Printf("Adding node %s\n", node2ID)
 		addNode(net, node2ID)
-		fmt.Printf("Added node %s %s\n", node2ID)
+		fmt.Printf("Added node %s\n", node2ID)
 
 		fmt.Printf("Adding link between %s and %s\n", node1ID, node2ID)
 		err = net.AddLink(node1ID, node2ID)

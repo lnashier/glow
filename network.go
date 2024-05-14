@@ -66,7 +66,7 @@ func New(opt ...NetworkOpt) *Network {
 }
 
 // Start runs the Network.
-func (n *Network) Start() error {
+func (n *Network) Start(ctx context.Context) error {
 	n.session.mu.Lock()
 	n.log("Network coming up")
 	defer n.session.mu.Unlock()
@@ -77,7 +77,7 @@ func (n *Network) Start() error {
 	defer func() {
 		n.session.stop = time.Now()
 	}()
-	n.session.ctx, n.session.cancel = context.WithCancel(context.Background())
+	n.session.ctx, n.session.cancel = context.WithCancel(ctx)
 	if n.stopGracetime > 0 {
 		cancel1 := n.session.cancel
 		n.session.cancel = func() {
@@ -96,11 +96,11 @@ func (n *Network) Start() error {
 
 	n.log("Nodes: %d", len(nodes))
 
-	wg, ctx := errgroup.WithContext(n.session.ctx)
+	wg, netCtx := errgroup.WithContext(n.session.ctx)
 
 	for _, node := range nodes {
 		wg.Go(func() error {
-			return n.nodeUp(ctx, node)
+			return n.nodeUp(netCtx, node)
 		})
 	}
 

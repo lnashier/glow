@@ -19,7 +19,12 @@ var node2OutCounts []string
 func Run() {
 	net := Network()
 	help.Draw(net, "bin/network.gv")
-	goarc.Up(net)
+	goarc.Up(goarc.ServiceFunc(func(starting bool) error {
+		if starting {
+			return net.Start(context.Background())
+		}
+		return net.Stop()
+	}))
 	help.Draw(net, "bin/network-tally.gv")
 	PrintResults()
 }

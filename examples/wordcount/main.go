@@ -28,7 +28,7 @@ func main() {
 			fmt.Println("count:", num)
 		}).
 		Draw("bin/network.gv").
-		Run().
+		Run(context.Background()).
 		Uptime(func(d time.Duration) {
 			fmt.Println(d)
 		}).

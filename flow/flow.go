@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/lnashier/glow"
 	"github.com/lnashier/glow/help"
-	"github.com/lnashier/goarc"
 	"slices"
 	"time"
 )
@@ -195,21 +194,21 @@ func (s *Seq) Count(cb func(num int)) *Seq {
 // Run initiates the processing of data through the pipeline, starting from the
 // initial input source and sequentially applying each operation
 // defined in the pipeline until reaching the terminal step.
-func (s *Seq) Run() *Seq {
-	if s.err != nil {
-		return s
+func (s *Seq) Run(ctx context.Context) *Seq {
+	if s.err == nil {
+		s.appendError(s.net.Start(ctx))
+		if s.err == nil {
+			for _, callback := range s.callbacks {
+				callback()
+			}
+		}
 	}
-	goarc.Up(
-		s.net,
-		goarc.OnStart(func(err error) {
-			s.appendError(err)
-		}),
-		goarc.OnStop(func(err error) {
-			s.appendError(err)
-		}),
-	)
-	for _, callback := range s.callbacks {
-		callback()
+	return s
+}
+
+func (s *Seq) Stop() *Seq {
+	if s.err == nil {
+		s.appendError(s.net.Stop())
 	}
 	return s
 }
