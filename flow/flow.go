@@ -95,9 +95,9 @@ func (s *Seq) Capture(cf func(ctx context.Context, in any) error, opt ...StepOpt
 	return s
 }
 
-// Collect aggregates all elements in the input data stream and provides the collection to provided callback.
-// It accepts the following options:
-//   - Compare option allows sorting the collection before passing it to the callback.
+// Collect aggregates all elements in the input data stream and provides the collection to the provided callback.
+// It accepts the Compare option to allow sorting the collected data points as they arrive.
+// As a terminal step in the pipeline, it does not emit data, marking the end of the data processing flow.
 func (s *Seq) Collect(cb func([]any), opt ...StepOpt) *Seq {
 	opts := &stepOpts{
 		compare: func(a any, b any) int {
@@ -127,7 +127,8 @@ func (s *Seq) Collect(cb func([]any), opt ...StepOpt) *Seq {
 	return s
 }
 
-// Count counts the number of elements in the input data stream.
+// Count keeps track of the number of elements in the input data stream.
+// Being a terminal step in the pipeline, it does not emit data.
 func (s *Seq) Count(cb func(num int), opt ...StepOpt) *Seq {
 	var tokens []any
 	s.callbacks = append(s.callbacks, func() {
@@ -175,8 +176,7 @@ func (s *Seq) Uptime(uf func(d time.Duration)) *Seq {
 	return s
 }
 
-// Error retrieves any error that occurred during the building
-// and execution of the pipeline.
+// Error retrieves any error that occurred during the building and execution of the pipeline.
 func (s *Seq) Error() error {
 	return s.err
 }
@@ -203,15 +203,15 @@ func (s *Seq) node(kind StepKind, nf func(context.Context, any, func(any)) error
 	if opts.concurrency < 1 {
 		opts.concurrency = 1
 	}
-	if len(opts.keyToken) == 0 {
-		opts.keyToken = kind.String()
+	if len(opts.key) == 0 {
+		opts.key = fmt.Sprintf("%s-%s", s.keygen(), kind)
 	}
 
 	var steps []*Step
 
-	for range opts.concurrency {
+	for i := range opts.concurrency {
 		opt := []glow.NodeOpt{
-			glow.Key(fmt.Sprintf("%s-%s", s.keygen(), opts.keyToken)),
+			glow.Key(fmt.Sprintf("%s-%d", opts.key, i+1)),
 			glow.EmitFunc(nf),
 		}
 		if opts.distributor {
