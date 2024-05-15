@@ -30,9 +30,7 @@ func Sequential(opt ...glow.NetworkOpt) *Seq {
 // reading data and emitting it. The emitted data can be of any type.
 // Usually, this is the first step, feeding data for processing on to subsequent steps.
 func (s *Seq) Read(rf func(ctx context.Context, emit func(any)) error, opt ...StepOpt) *Seq {
-	opts := &stepOpts{}
-	opts.apply(opt...)
-	s.seed(ReadStep, rf, opts)
+	s.seed(ReadStep, rf, (&stepOpts{}).apply(opt...))
 	return s
 }
 
@@ -92,8 +90,8 @@ func (s *Seq) Filter(ff func(in any) bool, opt ...StepOpt) *Seq {
 // Capture captures each element in the input data stream and feeds it to a capturing function.
 // The capturing function receives a context and captured data point.
 // Being a terminal step in the pipeline, it does not emit data.
-func (s *Seq) Capture(cf func(ctx context.Context, in any) error) *Seq {
-	s.terminal(CaptureStep, cf, &stepOpts{})
+func (s *Seq) Capture(cf func(ctx context.Context, in any) error, opt ...StepOpt) *Seq {
+	s.terminal(CaptureStep, cf, (&stepOpts{}).apply(opt...))
 	return s
 }
 
@@ -130,7 +128,7 @@ func (s *Seq) Collect(cb func([]any), opt ...StepOpt) *Seq {
 }
 
 // Count counts the number of elements in the input data stream.
-func (s *Seq) Count(cb func(num int)) *Seq {
+func (s *Seq) Count(cb func(num int), opt ...StepOpt) *Seq {
 	var tokens []any
 	s.callbacks = append(s.callbacks, func() {
 		cb(len(tokens))
@@ -139,7 +137,7 @@ func (s *Seq) Count(cb func(num int)) *Seq {
 	s.terminal(CountStep, func(ctx context.Context, in any) error {
 		tokens = append(tokens, in)
 		return nil
-	}, &stepOpts{})
+	}, (&stepOpts{}).apply(opt...))
 
 	return s
 }
