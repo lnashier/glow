@@ -210,8 +210,12 @@ func (s *Seq) node(kind StepKind, nf func(context.Context, any, func(any)) error
 	var steps []*Step
 
 	for i := range opts.concurrency {
+		replicaKey := opts.key
+		if opts.concurrency > 1 {
+			replicaKey = fmt.Sprintf("%s-r%d", opts.key, i+1)
+		}
 		opt := []glow.NodeOpt{
-			glow.Key(fmt.Sprintf("%s-%d", opts.key, i+1)),
+			glow.Key(replicaKey),
 			glow.EmitFunc(nf),
 		}
 		if opts.distributor {

@@ -18,7 +18,6 @@ The `glow` is an idiomatic general purpose computational network framework.
 - [x] Distributor mode
 - [ ] ~~Router mode~~
 - [x] Emitter mode
-  - [x] Filter
 - [x] Sessions
 - [x] Signaling
 - [x] Pause links
