@@ -8,43 +8,43 @@
  viewBox="0.00 0.00 177.75 344.45" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 340.45)">
 <polygon fill="white" stroke="none" points="-4,4 -4,-340.45 173.75,-340.45 173.75,4 -4,4"/>
-<text text-anchor="middle" x="84.88" y="-319.15" font-family="Times,serif" font-size="14.00">Network Uptime:357.833µs</text>
-<!-- node1&#45;read -->
+<text text-anchor="middle" x="84.88" y="-319.15" font-family="Times,serif" font-size="14.00">Network Uptime:468.292µs</text>
+<!-- node1&#45;read&#45;1 -->
 <g id="node1" class="node">
-<title>node1&#45;read</title>
-<ellipse fill="none" stroke="black" cx="79.39" cy="-282.96" rx="54.27" ry="28.99"/>
-<text text-anchor="middle" x="79.39" y="-286.16" font-family="Times,serif" font-size="14.00">node1&#45;read</text>
-<text text-anchor="middle" x="79.39" y="-269.66" font-family="Times,serif" font-size="14.00">(327µs)</text>
+<title>node1&#45;read&#45;1</title>
+<ellipse fill="none" stroke="black" cx="83.37" cy="-282.96" rx="62.23" ry="28.99"/>
+<text text-anchor="middle" x="83.37" y="-286.16" font-family="Times,serif" font-size="14.00">node1&#45;read&#45;1</text>
+<text text-anchor="middle" x="83.37" y="-269.66" font-family="Times,serif" font-size="14.00">(424.5µs)</text>
 </g>
-<!-- node2&#45;peek -->
+<!-- node2&#45;peek&#45;1 -->
 <g id="node2" class="node">
-<title>node2&#45;peek</title>
-<ellipse fill="none" stroke="black" cx="79.39" cy="-155.97" rx="58.51" ry="28.99"/>
-<text text-anchor="middle" x="79.39" y="-159.17" font-family="Times,serif" font-size="14.00">node2&#45;peek</text>
-<text text-anchor="middle" x="79.39" y="-142.67" font-family="Times,serif" font-size="14.00">(331.333µs)</text>
+<title>node2&#45;peek&#45;1</title>
+<ellipse fill="none" stroke="black" cx="83.37" cy="-155.97" rx="63.82" ry="28.99"/>
+<text text-anchor="middle" x="83.37" y="-159.17" font-family="Times,serif" font-size="14.00">node2&#45;peek&#45;1</text>
+<text text-anchor="middle" x="83.37" y="-142.67" font-family="Times,serif" font-size="14.00">(421.834µs)</text>
 </g>
-<!-- node1&#45;read&#45;&gt;node2&#45;peek -->
+<!-- node1&#45;read&#45;1&#45;&gt;node2&#45;peek&#45;1 -->
 <g id="edge1" class="edge">
-<title>node1&#45;read&#45;&gt;node2&#45;peek</title>
-<path fill="none" stroke="lightblue" d="M79.39,-253.6C79.39,-236.74 79.39,-215.1 79.39,-196.57"/>
-<polygon fill="lightblue" stroke="lightblue" points="82.89,-196.74 79.39,-186.74 75.89,-196.74 82.89,-196.74"/>
-<text text-anchor="middle" x="116.52" y="-222.67" font-family="Times,serif" font-size="14.00">50</text>
-<text text-anchor="middle" x="116.52" y="-206.17" font-family="Times,serif" font-size="14.00"> &#160;(329.042µs)</text>
+<title>node1&#45;read&#45;1&#45;&gt;node2&#45;peek&#45;1</title>
+<path fill="none" stroke="lightblue" d="M83.37,-253.6C83.37,-236.74 83.37,-215.1 83.37,-196.57"/>
+<polygon fill="lightblue" stroke="lightblue" points="86.87,-196.74 83.37,-186.74 79.87,-196.74 86.87,-196.74"/>
+<text text-anchor="middle" x="120.5" y="-222.67" font-family="Times,serif" font-size="14.00">50</text>
+<text text-anchor="middle" x="120.5" y="-206.17" font-family="Times,serif" font-size="14.00"> &#160;(419.042µs)</text>
 </g>
-<!-- node3&#45;collect -->
+<!-- node3&#45;collect&#45;1 -->
 <g id="node3" class="node">
-<title>node3&#45;collect</title>
-<ellipse fill="none" stroke="black" cx="79.39" cy="-28.99" rx="63.29" ry="28.99"/>
-<text text-anchor="middle" x="79.39" y="-32.19" font-family="Times,serif" font-size="14.00">node3&#45;collect</text>
-<text text-anchor="middle" x="79.39" y="-15.69" font-family="Times,serif" font-size="14.00">(337.958µs)</text>
+<title>node3&#45;collect&#45;1</title>
+<ellipse fill="none" stroke="black" cx="83.37" cy="-28.99" rx="71.24" ry="28.99"/>
+<text text-anchor="middle" x="83.37" y="-32.19" font-family="Times,serif" font-size="14.00">node3&#45;collect&#45;1</text>
+<text text-anchor="middle" x="83.37" y="-15.69" font-family="Times,serif" font-size="14.00">(442.75µs)</text>
 </g>
-<!-- node2&#45;peek&#45;&gt;node3&#45;collect -->
+<!-- node2&#45;peek&#45;1&#45;&gt;node3&#45;collect&#45;1 -->
 <g id="edge2" class="edge">
-<title>node2&#45;peek&#45;&gt;node3&#45;collect</title>
-<path fill="none" stroke="lightblue" d="M79.39,-126.61C79.39,-109.75 79.39,-88.12 79.39,-69.59"/>
-<polygon fill="lightblue" stroke="lightblue" points="82.89,-69.75 79.39,-59.75 75.89,-69.75 82.89,-69.75"/>
-<text text-anchor="middle" x="116.52" y="-95.68" font-family="Times,serif" font-size="14.00">50</text>
-<text text-anchor="middle" x="116.52" y="-79.18" font-family="Times,serif" font-size="14.00"> &#160;(337.083µs)</text>
+<title>node2&#45;peek&#45;1&#45;&gt;node3&#45;collect&#45;1</title>
+<path fill="none" stroke="lightblue" d="M83.37,-126.61C83.37,-109.75 83.37,-88.12 83.37,-69.59"/>
+<polygon fill="lightblue" stroke="lightblue" points="86.87,-69.75 83.37,-59.75 79.87,-69.75 86.87,-69.75"/>
+<text text-anchor="middle" x="120.5" y="-95.68" font-family="Times,serif" font-size="14.00">50</text>
+<text text-anchor="middle" x="120.5" y="-79.18" font-family="Times,serif" font-size="14.00"> &#160;(438.167µs)</text>
 </g>
 </g>
 </svg>

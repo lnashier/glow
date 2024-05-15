@@ -61,7 +61,7 @@ type Step struct {
 type StepOpt func(*stepOpts)
 
 type stepOpts struct {
-	keyToken    string
+	key         string
 	compare     func(any, any) int
 	concurrency int
 	distributor bool
@@ -74,9 +74,10 @@ func (o *stepOpts) apply(opt ...StepOpt) *stepOpts {
 	return o
 }
 
-func KeyToken(v string) StepOpt {
+// StepKey sets unique key for the Step.
+func StepKey(v string) StepOpt {
 	return func(o *stepOpts) {
-		o.keyToken = v
+		o.key = v
 	}
 }
 
@@ -91,16 +92,23 @@ func Compare(f func(a any, b any) int) StepOpt {
 	}
 }
 
+// Distributor enables a Step to distribute work among next Step, and it's replicas.
+// See
+//   - Concurrency
+func Distributor() StepOpt {
+	return func(o *stepOpts) {
+		o.distributor = true
+	}
+}
+
+// Concurrency sets the number of replicas for the Step, determining how many instances
+// of the Step will run concurrently. Depending on whether the preceding Step is in distributing
+// or broadcasting mode, these replicas will either operate in a synchronized manner,
+// collaborating on the same stream of data, or function independently, each handling the full stream.
 func Concurrency(v int) StepOpt {
 	return func(o *stepOpts) {
 		if v > 0 {
 			o.concurrency = v
 		}
-	}
-}
-
-func Distributor() StepOpt {
-	return func(o *stepOpts) {
-		o.distributor = true
 	}
 }

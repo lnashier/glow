@@ -20,7 +20,7 @@ func main() {
 			// https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md#no-parameterized-methods
 			plug.Tokenize(ctx, in.(string), emit)
 			return nil
-		}, flow.Distributor(), flow.KeyToken("tokenizer")).
+		}, flow.Distributor(), flow.StepKey("tokenizer")).
 		Filter(func(in any) bool {
 			return strings.HasPrefix(in.(string), "test")
 		}, flow.Concurrency(5)).
