@@ -48,6 +48,9 @@ func (n *Node) Key() string {
 }
 
 func (n *Node) Uptime() time.Duration {
+	if n.session.start.IsZero() {
+		return 0
+	}
 	if n.session.stop.IsZero() {
 		return time.Since(n.session.start)
 	}

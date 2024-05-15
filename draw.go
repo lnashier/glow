@@ -2,23 +2,27 @@ package glow
 
 import (
 	"bytes"
+	"fmt"
 	"text/template"
 )
 
 const tmpl = `strict digraph {
+  	labelloc="t"
+	label="{{ netProp "label" }}"
+
     node [shape=ellipse]
 	{{ range .Nodes -}}
 		"{{ .Key }}"
 		[
+			label="{{ nodeProp "label" . }}",
 			style="{{ nodeProp "style" . }}",
 			fillcolor="{{ nodeProp "color" . }}"
-			peripheries="{{ nodeProp "peripheries" . }}"
 		];
     {{ end -}}
     {{ range .Links -}}
         "{{ .From.Key }}" -> "{{ .To.Key }}"
 		[
-			label="  {{ .Tally }}",
+			label="{{ linkProp "label" . }}",
 			color="{{ linkProp "color" . }}"
 			arrowhead="{{ linkProp "arrowhead" . }}"
 		];
@@ -29,20 +33,21 @@ const tmpl = `strict digraph {
 func DOT(n *Network) ([]byte, error) {
 	t := template.New("tmpl")
 	t.Funcs(template.FuncMap{
-		"nodeProp": func(prop string, node *Node) any {
-			egress := n.Egress(node.Key())
-
+		"netProp": func(prop string) any {
 			switch prop {
-			case "peripheries":
-				switch {
-				case node.ef != nil:
-					return 2
-				default:
-					return 1
-				}
+			case "label":
+				return fmt.Sprintf("Network Uptime:%s\n", n.Uptime())
+			default:
+				return ""
+			}
+		},
+		"nodeProp": func(prop string, node *Node) any {
+			switch prop {
+			case "label":
+				return fmt.Sprintf("%s\n(%s)", node.key, node.Uptime())
 			case "color":
 				switch {
-				case len(egress) > 0 && node.distributor:
+				case len(n.Egress(node.Key())) > 0 && node.distributor:
 					// node with egress and distributor mode set
 					return "lightyellow"
 				default:
@@ -50,7 +55,7 @@ func DOT(n *Network) ([]byte, error) {
 				}
 			case "style":
 				switch {
-				case len(egress) > 0 && node.distributor:
+				case len(n.Egress(node.Key())) > 0 && node.distributor:
 					// node with egress and distributor mode set
 					return "filled"
 				default:
@@ -62,6 +67,8 @@ func DOT(n *Network) ([]byte, error) {
 		},
 		"linkProp": func(prop string, link *Link) any {
 			switch prop {
+			case "label":
+				return fmt.Sprintf("%d\n  (%s)", link.Tally(), link.Uptime())
 			case "color":
 				switch {
 				case link.paused:
