@@ -23,7 +23,7 @@ func main() {
 	err := seq.
 		Read(func(ctx context.Context, emit func(out any)) error {
 			for range 50 {
-				time.Sleep(1 * time.Second)
+				//time.Sleep(1 * time.Second)
 				select {
 				case <-ctx.Done():
 					return nil

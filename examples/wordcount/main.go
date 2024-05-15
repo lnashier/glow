@@ -20,17 +20,17 @@ func main() {
 			// https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md#no-parameterized-methods
 			plug.Tokenize(ctx, in.(string), emit)
 			return nil
-		}).
+		}, flow.Distributor(), flow.KeyToken("tokenizer")).
 		Filter(func(in any) bool {
 			return strings.HasPrefix(in.(string), "test")
-		}).
+		}, flow.Concurrency(5)).
 		Count(func(num int) {
-			fmt.Println("count:", num)
+			fmt.Println("Count:", num)
 		}).
 		Draw("bin/network.gv").
 		Run(context.Background()).
 		Uptime(func(d time.Duration) {
-			fmt.Println(d)
+			fmt.Println("Uptime:", d)
 		}).
 		Draw("bin/network-tally.gv").
 		Error()
