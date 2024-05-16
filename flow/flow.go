@@ -57,6 +57,8 @@ func (s *Seq) Peek(pf func(in any), opt ...StepOpt) *Seq {
 
 // Combine combines the elements of streams into a single stream, concatenating
 // all the data points from the individual streams in the order they arrive.
+// It enforces the flow to become linear, ensuring that each data point is
+// processed sequentially.
 func (s *Seq) Combine(opt ...StepOpt) *Seq {
 	s.transit(CombineStep, func(ctx context.Context, in any, emit func(any)) error {
 		emit(in)
@@ -98,7 +100,12 @@ func (s *Seq) Capture(cf func(ctx context.Context, in any) error, opt ...StepOpt
 // Collect aggregates all elements in the input data stream and provides the collection to the provided callback.
 // It accepts the Compare option to allow sorting the collected data points as they arrive.
 // As a terminal step in the pipeline, it does not emit data, marking the end of the data processing flow.
+// It enforces the flow to become linear, ensuring that each data point is processed sequentially.
 func (s *Seq) Collect(cb func([]any), opt ...StepOpt) *Seq {
+	// Enforce the flow to become linear
+	// Put combine step in distributor mode to avoid data loss or superfluous data.
+	s.Combine(Distributor())
+
 	opts := &stepOpts{
 		compare: func(a any, b any) int {
 			return 0
@@ -129,14 +136,19 @@ func (s *Seq) Collect(cb func([]any), opt ...StepOpt) *Seq {
 
 // Count keeps track of the number of elements in the input data stream.
 // Being a terminal step in the pipeline, it does not emit data.
+// It enforces the flow to become linear, ensuring that each data point is processed sequentially.
 func (s *Seq) Count(cb func(num int), opt ...StepOpt) *Seq {
-	var tokens []any
+	// Enforce the flow to become linear
+	// Put combine step in distributor mode to avoid data loss or superfluous data.
+	s.Combine(Distributor())
+
+	count := 0
 	s.callbacks = append(s.callbacks, func() {
-		cb(len(tokens))
+		cb(count)
 	})
 
-	s.terminal(CountStep, func(ctx context.Context, in any) error {
-		tokens = append(tokens, in)
+	s.terminal(CountStep, func(ctx context.Context, _ any) error {
+		count++
 		return nil
 	}, (&stepOpts{}).apply(opt...))
 
@@ -203,8 +215,15 @@ func (s *Seq) node(kind StepKind, nf func(context.Context, any, func(any)) error
 	if opts.concurrency < 1 {
 		opts.concurrency = 1
 	}
+
+	if slices.Contains(linearKinds, kind) && opts.concurrency != 1 {
+		s.appendError(fmt.Errorf("%s step concurrency not 1", kind))
+	}
+
+	// Even if key is supplied, call keygen() to keep node numbers relevant
+	keyPart := s.keygen()
 	if len(opts.key) == 0 {
-		opts.key = fmt.Sprintf("%s-%s", s.keygen(), kind)
+		opts.key = fmt.Sprintf("%s-%s", keyPart, kind)
 	}
 
 	var steps []*Step

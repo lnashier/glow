@@ -425,7 +425,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 							return nil
 						case nodeData, ok := <-nodeDataCh:
 							if !ok {
-								n.log("Node(%s/%s) Data Channel Closed for Node(%s)", node.Key(), ingressLink.y.Key(), ingressLink.x.Key())
+								n.log("Node(%s/%s) Data Channel Closed For Node(%s)", node.Key(), ingressLink.y.Key(), ingressLink.x.Key())
 								return nil
 							}
 

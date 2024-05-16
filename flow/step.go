@@ -53,6 +53,12 @@ var terminalKinds = []StepKind{
 	CountStep,
 }
 
+var linearKinds = []StepKind{
+	PeekStep,
+	CollectStep,
+	CountStep,
+}
+
 type Step struct {
 	id   string
 	kind StepKind
