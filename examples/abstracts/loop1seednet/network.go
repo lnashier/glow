@@ -34,7 +34,7 @@ func addSeed(net *glow.Network, keygen func() string, opt ...glow.NodeOpt) (stri
 	nodeInCounts.Store(nodeID, make([]int, 0))
 	nodeOutCounts.Store(nodeID, make([]int, 0))
 
-	opt = append(opt, glow.NodeFunc(func(ctx context.Context, _ any) (any, error) {
+	opt = append(opt, glow.BasicFunc(func(ctx context.Context, _ any) (any, error) {
 		num1, _ := seedCounts.Load(nodeID)
 		num := num1.(int) + 1
 
@@ -59,7 +59,7 @@ func addNode(net *glow.Network, keygen func() string, opt ...glow.NodeOpt) (stri
 	nodeInCounts.Store(nodeID, make([]int, 0))
 	nodeOutCounts.Store(nodeID, make([]int, 0))
 
-	opt = append(opt, glow.NodeFunc(func(ctx context.Context, in1 any) (any, error) {
+	opt = append(opt, glow.BasicFunc(func(ctx context.Context, in1 any) (any, error) {
 		xtime.SleepWithContext(ctx, time.Second*1)
 		in := in1.(int)
 		inCounts, _ := nodeInCounts.Load(nodeID)

@@ -47,7 +47,7 @@ func Network() *glow.Network {
 		nodeOutCounts.Store(i, []string{})
 	}
 
-	node0, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, _ any) (any, error) {
+	node0, err := n.AddNode(glow.BasicFunc(func(ctx context.Context, _ any) (any, error) {
 		xtime.SleepWithContext(ctx, time.Second*5)
 
 		num, _ := seedCounts.Load(0)
@@ -64,7 +64,7 @@ func Network() *glow.Network {
 		panic(err)
 	}
 
-	node1, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, _ any) (any, error) {
+	node1, err := n.AddNode(glow.BasicFunc(func(ctx context.Context, _ any) (any, error) {
 		xtime.SleepWithContext(ctx, time.Second*5)
 
 		num, _ := seedCounts.Load(1)
@@ -81,7 +81,7 @@ func Network() *glow.Network {
 		panic(err)
 	}
 
-	node2, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, _ any) (any, error) {
+	node2, err := n.AddNode(glow.BasicFunc(func(ctx context.Context, _ any) (any, error) {
 		xtime.SleepWithContext(ctx, time.Second*5)
 
 		num, _ := seedCounts.Load(2)
@@ -98,7 +98,7 @@ func Network() *glow.Network {
 		panic(err)
 	}
 
-	node3, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, in1 any) (any, error) {
+	node3, err := n.AddNode(glow.BasicFunc(func(ctx context.Context, in1 any) (any, error) {
 		in := in1.([]byte)
 		inCounts, _ := nodeInCounts.Load(3)
 		nodeInCounts.Store(3, append(inCounts.([]string), string(in)))
@@ -112,7 +112,7 @@ func Network() *glow.Network {
 		panic(err)
 	}
 
-	node4, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, in1 any) (any, error) {
+	node4, err := n.AddNode(glow.BasicFunc(func(ctx context.Context, in1 any) (any, error) {
 		in := in1.([]byte)
 		inCounts, _ := nodeInCounts.Load(4)
 		nodeInCounts.Store(4, append(inCounts.([]string), string(in)))
@@ -126,7 +126,7 @@ func Network() *glow.Network {
 		panic(err)
 	}
 
-	node5, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, in1 any) (any, error) {
+	node5, err := n.AddNode(glow.BasicFunc(func(ctx context.Context, in1 any) (any, error) {
 		in := in1.([]byte)
 		inCounts, _ := nodeInCounts.Load(5)
 		nodeInCounts.Store(5, append(inCounts.([]string), string(in)))
@@ -140,7 +140,7 @@ func Network() *glow.Network {
 		panic(err)
 	}
 
-	node6, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, in1 any) (any, error) {
+	node6, err := n.AddNode(glow.BasicFunc(func(ctx context.Context, in1 any) (any, error) {
 		in := in1.([]byte)
 		inCounts, _ := nodeInCounts.Load(6)
 		nodeInCounts.Store(6, append(inCounts.([]string), string(in)))
@@ -154,7 +154,7 @@ func Network() *glow.Network {
 		panic(err)
 	}
 
-	node7, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, in1 any) (any, error) {
+	node7, err := n.AddNode(glow.BasicFunc(func(ctx context.Context, in1 any) (any, error) {
 		in := in1.([]byte)
 		inCounts, _ := nodeInCounts.Load(7)
 		nodeInCounts.Store(7, append(inCounts.([]string), string(in)))

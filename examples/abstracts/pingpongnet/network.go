@@ -42,7 +42,7 @@ func Network() *glow.Network {
 		nodeOutCounts.Store(i+1, []string{})
 	}
 
-	node1, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, in1 any) (any, error) {
+	node1, err := n.AddNode(glow.BasicFunc(func(ctx context.Context, in1 any) (any, error) {
 		in := in1.([]byte)
 		xtime.SleepWithContext(ctx, time.Second*1)
 
@@ -60,7 +60,7 @@ func Network() *glow.Network {
 		panic(err)
 	}
 
-	node2, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, in1 any) (any, error) {
+	node2, err := n.AddNode(glow.BasicFunc(func(ctx context.Context, in1 any) (any, error) {
 		in := in1.([]byte)
 		xtime.SleepWithContext(ctx, time.Second*1)
 

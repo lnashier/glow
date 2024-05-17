@@ -15,19 +15,19 @@ import (
 // Node types:
 //   - With no Links, Node is considered an isolated-node.
 //   - With only egress Links, Node is considered a seed-node.
-//   - With only ingress Links, Node is considered a terminus-node.
+//   - With only ingress Links, Node is considered a terminal-node.
 //   - With both egress and ingress Links, Node is considered a transit-node.
 //
 // Node operating modes:
 //   - By default, a Node operates in broadcaster mode unless the distributor flag is set.
 //     In broadcaster mode, Node broadcasts all incoming data to all outgoing links.
 //     When the distributor flag is enabled, a Node distributes incoming data among its outgoing links.
-//     Distributor mode is not functional for isolated and terminus nodes.
-//   - By default, a Node operates in "push-pull" mode: the Network pushes data to NodeFunc,
-//     and it waits for NodeFunc to return with output data, which is then forwarded to connected Node(s).
+//     Distributor mode is not functional for isolated and terminal nodes.
+//   - By default, a Node operates in "push-pull" mode: the Network pushes data to BasicFunc,
+//     and it waits for BasicFunc to return with output data, which is then forwarded to connected Node(s).
 //     This behavior can be changed to "push-push" by setting the EmitFunc for the Node.
-//     In emitter mode, the Network pushes data to EmitFunc, and the Node emits data back to the Network
-//     through the supplied callback emit function.
+//     When EmitFunc is set, the Network pushes data to EmitFunc, and it emits zero or more data points back
+//     to the Network through the supplied callback emit function.
 type Node struct {
 	key         string
 	f           func(context.Context, any) (any, error)
@@ -84,9 +84,9 @@ func Distributor() NodeOpt {
 	}
 }
 
-// NodeFunc is responsible for processing incoming data on the Node.
+// BasicFunc is responsible for processing incoming data on the Node.
 // Output from the Node is forwarded to downstream connected Node(s).
-func NodeFunc(f func(ctx context.Context, data any) (any, error)) NodeOpt {
+func BasicFunc(f func(ctx context.Context, data any) (any, error)) NodeOpt {
 	return func(n *Node) {
 		n.f = f
 	}
@@ -214,9 +214,9 @@ func (n *Network) Seeds() []string {
 	return keys
 }
 
-// Termini returns all the nodes that have only ingress links.
-// Network.Node should be called to get actual node.
-func (n *Network) Termini() []string {
+// Terminals returns all the nodes that have only ingress links.
+// Network.Node should be called to get actual Node.
+func (n *Network) Terminals() []string {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
 
@@ -269,15 +269,15 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 		defer n.log("Seed Node(%s) going away", node.Key())
 		defer n.closeEgress(node.Key())
 
-		// When the seed-node is in emitter mode, the emitter function is called once.
+		// When the seed-node has EmitFunc set, the node function is called once.
 		// The seed-node has the option to emit as many data points as needed during
-		// this emission phase. After the Node emitter function returns, the seed-node
+		// this emission phase. After the Node emit function returns, the seed-node
 		// gracefully shuts down, concluding its emission process. This mode allows
 		// the seed-node to continuously emit data points before terminating its execution.
 		nf := node.ef
 		if nf == nil {
-			// When the seed-node is in regular mode, the node function is invoked repeatedly
-			// until the seed-node does not return ErrSeedingDone or ErrNodeGoingAway errors.
+			// When the seed-node has BasicFunc set, the node function is invoked repeatedly
+			// until it does not return ErrSeedingDone or ErrNodeGoingAway.
 			// This indicates that the seed-node has completed its seeding process.
 			nf = func(ctx context.Context, in any, emit func(any)) error {
 				for {
@@ -370,11 +370,11 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 
 		nodeWg, nodeCtx := errgroup.WithContext(ctx)
 
-		// When transit-node is in emitter mode, Node emitter function is called for every incoming data point.
+		// When transit-node has EmitFunc set, the node function is called for every incoming data point.
 		// Transit-node can choose to emit as many data points and return control back to get next incoming data point.
 		nf := node.ef
 		if nf == nil {
-			// Turn regular node function to emitter node function
+			// Turn basic function to emit function
 			nf = func(ctx context.Context, in any, emit func(any)) error {
 				out, err := node.f(ctx, in)
 				if err != nil {
