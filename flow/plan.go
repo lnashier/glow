@@ -104,10 +104,11 @@ func (p *Plan) build() {
 					}
 					replicas = append(replicas, step)
 					steps[opts.key] = replicas
-					if opts.callback != nil {
-						p.callbacks = append(p.callbacks, opts.callback)
-					}
 				}
+			}
+
+			if opts.callback != nil && p.Error() == nil {
+				p.callbacks = append(p.callbacks, opts.callback)
 			}
 
 			// make connections
