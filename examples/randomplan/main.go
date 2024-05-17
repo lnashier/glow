@@ -19,7 +19,7 @@ func main() {
 					case <-ctx.Done():
 						return nil
 					default:
-						emit(rand.Intn(101))
+						emit(rand.Intn(1001))
 					}
 				}
 				return nil
@@ -27,7 +27,7 @@ func main() {
 		).
 		Step(
 			flow.StepKey("filter"),
-			flow.Replicas(2),
+			flow.Replicas(4),
 			flow.Filter(func(in any) bool {
 				return in.(int)%2 == 0
 			}),
@@ -48,7 +48,7 @@ func main() {
 		Draw("bin/network.gv").
 		Run(context.Background()).
 		Uptime(func(d time.Duration) {
-			fmt.Println(d)
+			fmt.Println("Uptime", d)
 		}).
 		Draw("bin/network-tally.gv").
 		Error()

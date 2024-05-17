@@ -7,14 +7,25 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/lnashier/glow/flow"
+	"github.com/lnashier/goarc"
 	"strings"
 	"time"
 )
 
 func main() {
+	seq := flow.Sequential( /*glow.Verbose()*/ )
+
+	// Add a hook to listen to exit signal
+	goarc.Up(goarc.ServiceFunc(func(starting bool) error {
+		if !starting {
+			seq.Stop()
+		}
+		return nil
+	}))
+
 	found := false
 
-	err := flow.Sequential().
+	err := seq.
 		Read(func(ctx context.Context, emit func(any)) error {
 			for !found {
 				select {
@@ -35,14 +46,20 @@ func main() {
 				}
 			}
 			return nil
-		}, flow.StepKey("generator"), flow.Replicas(2), flow.Distributor()).
+		}, flow.StepKey("generator"), flow.Replicas(10), flow.Distributor()).
 		Filter(func(in any) bool {
-			return strings.HasPrefix(in.(string), "000")
+			if found {
+				return false
+			}
+			found = strings.HasPrefix(in.(string), "000000")
+			return found
 		}, flow.StepKey("filter"), flow.Replicas(4)).
-		Peek(func(in any) {
-			found = true
-			fmt.Println(in.(string))
-		}, flow.StepKey("print")).
+		Collect(
+			func(hashes []any) {
+				fmt.Printf("%v (%d)\n", hashes, len(hashes))
+			},
+			nil,
+		).
 		Draw("bin/network.gv").
 		Run(context.Background()).
 		Uptime(func(d time.Duration) {

@@ -8,150 +8,150 @@
  viewBox="0.00 0.00 724.69 471.43" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 <g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 467.43)">
 <polygon fill="white" stroke="none" points="-4,4 -4,-467.43 720.69,-467.43 720.69,4 -4,4"/>
-<text text-anchor="middle" x="358.35" y="-446.13" font-family="Times,serif" font-size="14.00">Network Uptime:316.834µs</text>
+<text text-anchor="middle" x="358.35" y="-446.13" font-family="Times,serif" font-size="14.00">Network Uptime: 306.625µs</text>
 <!-- step3&#45;filter&#45;r4 -->
 <g id="node1" class="node">
 <title>step3&#45;filter&#45;r4</title>
 <ellipse fill="none" stroke="black" cx="64.35" cy="-155.97" rx="64.35" ry="28.99"/>
 <text text-anchor="middle" x="64.35" y="-159.17" font-family="Times,serif" font-size="14.00">step3&#45;filter&#45;r4</text>
-<text text-anchor="middle" x="64.35" y="-142.67" font-family="Times,serif" font-size="14.00">(258.875µs)</text>
+<text text-anchor="middle" x="64.35" y="-142.67" font-family="Times,serif" font-size="14.00">(205.417µs)</text>
 </g>
 <!-- step4&#45;count -->
 <g id="node3" class="node">
 <title>step4&#45;count</title>
 <ellipse fill="none" stroke="black" cx="358.35" cy="-28.99" rx="58.51" ry="28.99"/>
 <text text-anchor="middle" x="358.35" y="-32.19" font-family="Times,serif" font-size="14.00">step4&#45;count</text>
-<text text-anchor="middle" x="358.35" y="-15.69" font-family="Times,serif" font-size="14.00">(229.833µs)</text>
+<text text-anchor="middle" x="358.35" y="-15.69" font-family="Times,serif" font-size="14.00">(249.375µs)</text>
 </g>
 <!-- step3&#45;filter&#45;r4&#45;&gt;step4&#45;count -->
-<g id="edge11" class="edge">
+<g id="edge10" class="edge">
 <title>step3&#45;filter&#45;r4&#45;&gt;step4&#45;count</title>
-<path fill="none" stroke="lightblue" d="M92.71,-129.91C113.82,-112.46 144.07,-89.91 174.1,-75.98 211.23,-58.76 255.68,-47.43 291.62,-40.32"/>
-<polygon fill="lightblue" stroke="lightblue" points="291.83,-43.84 301,-38.53 290.52,-36.97 291.83,-43.84"/>
-<text text-anchor="middle" x="211.47" y="-95.68" font-family="Times,serif" font-size="14.00">0</text>
-<text text-anchor="middle" x="211.47" y="-79.18" font-family="Times,serif" font-size="14.00"> &#160;(228.791µs)</text>
+<path fill="none" stroke="lightblue" d="M91.93,-129.44C112.17,-112.01 141.08,-89.66 170.1,-75.98 208.15,-58.04 253.95,-46.65 290.85,-39.7"/>
+<polygon fill="lightblue" stroke="lightblue" points="291.29,-43.17 300.51,-37.95 290.04,-36.29 291.29,-43.17"/>
+<text text-anchor="middle" x="207.47" y="-95.68" font-family="Times,serif" font-size="14.00">1</text>
+<text text-anchor="middle" x="207.47" y="-79.18" font-family="Times,serif" font-size="14.00"> &#160;(246.042µs)</text>
 </g>
 <!-- step3&#45;filter&#45;r5 -->
 <g id="node2" class="node">
 <title>step3&#45;filter&#45;r5</title>
 <ellipse fill="none" stroke="black" cx="211.35" cy="-155.97" rx="64.35" ry="28.99"/>
 <text text-anchor="middle" x="211.35" y="-159.17" font-family="Times,serif" font-size="14.00">step3&#45;filter&#45;r5</text>
-<text text-anchor="middle" x="211.35" y="-142.67" font-family="Times,serif" font-size="14.00">(240.25µs)</text>
+<text text-anchor="middle" x="211.35" y="-142.67" font-family="Times,serif" font-size="14.00">(201.25µs)</text>
 </g>
 <!-- step3&#45;filter&#45;r5&#45;&gt;step4&#45;count -->
-<g id="edge1" class="edge">
+<g id="edge11" class="edge">
 <title>step3&#45;filter&#45;r5&#45;&gt;step4&#45;count</title>
-<path fill="none" stroke="lightblue" d="M233.73,-128.55C248.06,-112.42 267.53,-91.92 286.85,-75.98 294.54,-69.64 303.15,-63.44 311.66,-57.75"/>
-<polygon fill="lightblue" stroke="lightblue" points="313.43,-60.77 319.91,-52.39 309.62,-54.9 313.43,-60.77"/>
-<text text-anchor="middle" x="321.1" y="-95.68" font-family="Times,serif" font-size="14.00">1</text>
-<text text-anchor="middle" x="321.1" y="-79.18" font-family="Times,serif" font-size="14.00"> &#160;(218.25µs)</text>
+<path fill="none" stroke="lightblue" d="M231.12,-128.12C243.93,-111.84 261.63,-91.31 280.1,-75.98 288.73,-68.81 298.63,-62.07 308.4,-56.07"/>
+<polygon fill="lightblue" stroke="lightblue" points="309.97,-59.21 316.79,-51.11 306.4,-53.19 309.97,-59.21"/>
+<text text-anchor="middle" x="317.47" y="-95.68" font-family="Times,serif" font-size="14.00">3</text>
+<text text-anchor="middle" x="317.47" y="-79.18" font-family="Times,serif" font-size="14.00"> &#160;(248.209µs)</text>
 </g>
 <!-- step1&#45;read -->
 <g id="node4" class="node">
 <title>step1&#45;read</title>
-<ellipse fill="none" stroke="black" cx="358.35" cy="-409.94" rx="58.51" ry="28.99"/>
+<ellipse fill="none" stroke="black" cx="358.35" cy="-409.94" rx="53.74" ry="28.99"/>
 <text text-anchor="middle" x="358.35" y="-413.14" font-family="Times,serif" font-size="14.00">step1&#45;read</text>
-<text text-anchor="middle" x="358.35" y="-396.64" font-family="Times,serif" font-size="14.00">(179.458µs)</text>
+<text text-anchor="middle" x="358.35" y="-396.64" font-family="Times,serif" font-size="14.00">(80.625µs)</text>
 </g>
 <!-- tokenizer -->
 <g id="node5" class="node">
 <title>tokenizer</title>
-<ellipse fill="lightyellow" stroke="black" cx="358.35" cy="-282.96" rx="53.74" ry="28.99"/>
+<ellipse fill="lightyellow" stroke="black" cx="358.35" cy="-282.96" rx="58.51" ry="28.99"/>
 <text text-anchor="middle" x="358.35" y="-286.16" font-family="Times,serif" font-size="14.00">tokenizer</text>
-<text text-anchor="middle" x="358.35" y="-269.66" font-family="Times,serif" font-size="14.00">(125.25µs)</text>
+<text text-anchor="middle" x="358.35" y="-269.66" font-family="Times,serif" font-size="14.00">(226.667µs)</text>
 </g>
 <!-- step1&#45;read&#45;&gt;tokenizer -->
-<g id="edge2" class="edge">
+<g id="edge1" class="edge">
 <title>step1&#45;read&#45;&gt;tokenizer</title>
 <path fill="none" stroke="lightblue" d="M358.35,-380.58C358.35,-363.72 358.35,-342.08 358.35,-323.56"/>
 <polygon fill="lightblue" stroke="lightblue" points="361.85,-323.72 358.35,-313.72 354.85,-323.72 361.85,-323.72"/>
-<text text-anchor="middle" x="392.1" y="-349.65" font-family="Times,serif" font-size="14.00">1</text>
-<text text-anchor="middle" x="392.1" y="-333.15" font-family="Times,serif" font-size="14.00"> &#160;(40.125µs)</text>
+<text text-anchor="middle" x="395.47" y="-349.65" font-family="Times,serif" font-size="14.00">1</text>
+<text text-anchor="middle" x="395.47" y="-333.15" font-family="Times,serif" font-size="14.00"> &#160;(159.458µs)</text>
 </g>
 <!-- tokenizer&#45;&gt;step3&#45;filter&#45;r4 -->
-<g id="edge7" class="edge">
+<g id="edge5" class="edge">
 <title>tokenizer&#45;&gt;step3&#45;filter&#45;r4</title>
-<path fill="none" stroke="lightblue" d="M306.53,-275.05C267.63,-268.51 213.76,-256.55 170.1,-235.97 145.05,-224.15 120.08,-205.89 100.7,-189.9"/>
-<polygon fill="lightblue" stroke="lightblue" points="102.99,-187.25 93.09,-183.48 98.48,-192.6 102.99,-187.25"/>
-<text text-anchor="middle" x="207.47" y="-222.67" font-family="Times,serif" font-size="14.00">3</text>
-<text text-anchor="middle" x="207.47" y="-206.17" font-family="Times,serif" font-size="14.00"> &#160;(241.875µs)</text>
+<path fill="none" stroke="lightblue" d="M304,-271.7C269.84,-264.19 225.34,-252.42 188.1,-235.97 159.1,-223.16 129.07,-204.15 105.86,-187.99"/>
+<polygon fill="lightblue" stroke="lightblue" points="108.09,-185.29 97.91,-182.37 104.05,-191 108.09,-185.29"/>
+<text text-anchor="middle" x="225.47" y="-222.67" font-family="Times,serif" font-size="14.00">4</text>
+<text text-anchor="middle" x="225.47" y="-206.17" font-family="Times,serif" font-size="14.00"> &#160;(199.334µs)</text>
 </g>
 <!-- tokenizer&#45;&gt;step3&#45;filter&#45;r5 -->
-<g id="edge3" class="edge">
+<g id="edge6" class="edge">
 <title>tokenizer&#45;&gt;step3&#45;filter&#45;r5</title>
-<path fill="none" stroke="lightblue" d="M319.7,-262.53C306.52,-255.07 292.1,-245.93 280.1,-235.97 264.81,-223.27 250.04,-207.01 238.14,-192.55"/>
-<polygon fill="lightblue" stroke="lightblue" points="241.06,-190.6 232.06,-185.01 235.61,-194.99 241.06,-190.6"/>
-<text text-anchor="middle" x="317.47" y="-222.67" font-family="Times,serif" font-size="14.00">5</text>
-<text text-anchor="middle" x="317.47" y="-206.17" font-family="Times,serif" font-size="14.00"> &#160;(233.791µs)</text>
+<path fill="none" stroke="lightblue" d="M329.34,-257.38C321.17,-250.46 312.28,-242.92 304.1,-235.97 285.98,-220.57 265.89,-203.47 249.05,-189.12"/>
+<polygon fill="lightblue" stroke="lightblue" points="251.61,-186.7 241.73,-182.88 247.07,-192.03 251.61,-186.7"/>
+<text text-anchor="middle" x="329.47" y="-222.67" font-family="Times,serif" font-size="14.00">4</text>
+<text text-anchor="middle" x="329.47" y="-206.17" font-family="Times,serif" font-size="14.00"> &#160;(193µs)</text>
 </g>
 <!-- step3&#45;filter&#45;r1 -->
 <g id="node6" class="node">
 <title>step3&#45;filter&#45;r1</title>
 <ellipse fill="none" stroke="black" cx="358.35" cy="-155.97" rx="64.35" ry="28.99"/>
 <text text-anchor="middle" x="358.35" y="-159.17" font-family="Times,serif" font-size="14.00">step3&#45;filter&#45;r1</text>
-<text text-anchor="middle" x="358.35" y="-142.67" font-family="Times,serif" font-size="14.00">(198.041µs)</text>
+<text text-anchor="middle" x="358.35" y="-142.67" font-family="Times,serif" font-size="14.00">(229.417µs)</text>
 </g>
 <!-- tokenizer&#45;&gt;step3&#45;filter&#45;r1 -->
-<g id="edge4" class="edge">
+<g id="edge2" class="edge">
 <title>tokenizer&#45;&gt;step3&#45;filter&#45;r1</title>
 <path fill="none" stroke="lightblue" d="M358.35,-253.6C358.35,-236.74 358.35,-215.1 358.35,-196.57"/>
 <polygon fill="lightblue" stroke="lightblue" points="361.85,-196.74 358.35,-186.74 354.85,-196.74 361.85,-196.74"/>
-<text text-anchor="middle" x="395.47" y="-222.67" font-family="Times,serif" font-size="14.00">3</text>
-<text text-anchor="middle" x="395.47" y="-206.17" font-family="Times,serif" font-size="14.00"> &#160;(185.791µs)</text>
+<text text-anchor="middle" x="395.47" y="-222.67" font-family="Times,serif" font-size="14.00">5</text>
+<text text-anchor="middle" x="395.47" y="-206.17" font-family="Times,serif" font-size="14.00"> &#160;(221.417µs)</text>
 </g>
 <!-- step3&#45;filter&#45;r2 -->
 <g id="node7" class="node">
 <title>step3&#45;filter&#45;r2</title>
 <ellipse fill="none" stroke="black" cx="505.35" cy="-155.97" rx="64.35" ry="28.99"/>
 <text text-anchor="middle" x="505.35" y="-159.17" font-family="Times,serif" font-size="14.00">step3&#45;filter&#45;r2</text>
-<text text-anchor="middle" x="505.35" y="-142.67" font-family="Times,serif" font-size="14.00">(263.875µs)</text>
+<text text-anchor="middle" x="505.35" y="-142.67" font-family="Times,serif" font-size="14.00">(264.75µs)</text>
 </g>
 <!-- tokenizer&#45;&gt;step3&#45;filter&#45;r2 -->
-<g id="edge5" class="edge">
+<g id="edge3" class="edge">
 <title>tokenizer&#45;&gt;step3&#45;filter&#45;r2</title>
-<path fill="none" stroke="lightblue" d="M396.86,-262.5C409.99,-255.04 424.37,-245.91 436.35,-235.97 451.66,-223.25 466.48,-206.99 478.43,-192.54"/>
+<path fill="none" stroke="lightblue" d="M398.46,-261.58C411.15,-254.3 424.86,-245.5 436.35,-235.97 451.66,-223.25 466.48,-206.99 478.43,-192.54"/>
 <polygon fill="lightblue" stroke="lightblue" points="480.97,-194.97 484.53,-184.99 475.52,-190.57 480.97,-194.97"/>
-<text text-anchor="middle" x="503.1" y="-222.67" font-family="Times,serif" font-size="14.00">4</text>
-<text text-anchor="middle" x="503.1" y="-206.17" font-family="Times,serif" font-size="14.00"> &#160;(261.25µs)</text>
+<text text-anchor="middle" x="506.47" y="-222.67" font-family="Times,serif" font-size="14.00">4</text>
+<text text-anchor="middle" x="506.47" y="-206.17" font-family="Times,serif" font-size="14.00"> &#160;(262.792µs)</text>
 </g>
 <!-- step3&#45;filter&#45;r3 -->
 <g id="node8" class="node">
 <title>step3&#45;filter&#45;r3</title>
 <ellipse fill="none" stroke="black" cx="652.35" cy="-155.97" rx="64.35" ry="28.99"/>
 <text text-anchor="middle" x="652.35" y="-159.17" font-family="Times,serif" font-size="14.00">step3&#45;filter&#45;r3</text>
-<text text-anchor="middle" x="652.35" y="-142.67" font-family="Times,serif" font-size="14.00">(219.083µs)</text>
+<text text-anchor="middle" x="652.35" y="-142.67" font-family="Times,serif" font-size="14.00">(230.959µs)</text>
 </g>
 <!-- tokenizer&#45;&gt;step3&#45;filter&#45;r3 -->
-<g id="edge6" class="edge">
+<g id="edge4" class="edge">
 <title>tokenizer&#45;&gt;step3&#45;filter&#45;r3</title>
-<path fill="none" stroke="lightblue" d="M409.86,-274.15C447.26,-267.25 498.45,-255.23 540.35,-235.97 566.9,-223.76 593.76,-205.08 614.51,-188.95"/>
-<polygon fill="lightblue" stroke="lightblue" points="616.45,-191.88 622.12,-182.93 612.1,-186.39 616.45,-191.88"/>
-<text text-anchor="middle" x="632.47" y="-222.67" font-family="Times,serif" font-size="14.00">5</text>
-<text text-anchor="middle" x="632.47" y="-206.17" font-family="Times,serif" font-size="14.00"> &#160;(203.041µs)</text>
+<path fill="none" stroke="lightblue" d="M414.52,-274.42C453.22,-267.79 505.07,-255.96 547.35,-235.97 572.27,-224.18 597.06,-205.91 616.29,-189.92"/>
+<polygon fill="lightblue" stroke="lightblue" points="618.49,-192.65 623.84,-183.5 613.95,-187.31 618.49,-192.65"/>
+<text text-anchor="middle" x="636.47" y="-222.67" font-family="Times,serif" font-size="14.00">3</text>
+<text text-anchor="middle" x="636.47" y="-206.17" font-family="Times,serif" font-size="14.00"> &#160;(226.709µs)</text>
 </g>
 <!-- step3&#45;filter&#45;r1&#45;&gt;step4&#45;count -->
-<g id="edge8" class="edge">
+<g id="edge7" class="edge">
 <title>step3&#45;filter&#45;r1&#45;&gt;step4&#45;count</title>
 <path fill="none" stroke="lightblue" d="M358.35,-126.61C358.35,-109.75 358.35,-88.12 358.35,-69.59"/>
 <polygon fill="lightblue" stroke="lightblue" points="361.85,-69.75 358.35,-59.75 354.85,-69.75 361.85,-69.75"/>
 <text text-anchor="middle" x="395.47" y="-95.68" font-family="Times,serif" font-size="14.00">0</text>
-<text text-anchor="middle" x="395.47" y="-79.18" font-family="Times,serif" font-size="14.00"> &#160;(224.041µs)</text>
+<text text-anchor="middle" x="395.47" y="-79.18" font-family="Times,serif" font-size="14.00"> &#160;(247.959µs)</text>
 </g>
 <!-- step3&#45;filter&#45;r2&#45;&gt;step4&#45;count -->
-<g id="edge9" class="edge">
+<g id="edge8" class="edge">
 <title>step3&#45;filter&#45;r2&#45;&gt;step4&#45;count</title>
 <path fill="none" stroke="lightblue" d="M485.48,-128.13C472.61,-111.86 454.84,-91.33 436.35,-75.98 427.73,-68.83 417.86,-62.09 408.12,-56.1"/>
 <polygon fill="lightblue" stroke="lightblue" points="410.15,-53.23 399.76,-51.14 406.57,-59.25 410.15,-53.23"/>
 <text text-anchor="middle" x="506.47" y="-95.68" font-family="Times,serif" font-size="14.00">0</text>
-<text text-anchor="middle" x="506.47" y="-79.18" font-family="Times,serif" font-size="14.00"> &#160;(214.416µs)</text>
+<text text-anchor="middle" x="506.47" y="-79.18" font-family="Times,serif" font-size="14.00"> &#160;(241.917µs)</text>
 </g>
 <!-- step3&#45;filter&#45;r3&#45;&gt;step4&#45;count -->
-<g id="edge10" class="edge">
+<g id="edge9" class="edge">
 <title>step3&#45;filter&#45;r3&#45;&gt;step4&#45;count</title>
 <path fill="none" stroke="lightblue" d="M624.99,-129.43C604.91,-111.98 576.22,-89.64 547.35,-75.98 509.03,-57.86 462.85,-46.45 425.73,-39.53"/>
 <polygon fill="lightblue" stroke="lightblue" points="426.47,-36.11 416.01,-37.79 425.24,-43 426.47,-36.11"/>
-<text text-anchor="middle" x="636.47" y="-95.68" font-family="Times,serif" font-size="14.00">4</text>
-<text text-anchor="middle" x="636.47" y="-79.18" font-family="Times,serif" font-size="14.00"> &#160;(227.833µs)</text>
+<text text-anchor="middle" x="636.47" y="-95.68" font-family="Times,serif" font-size="14.00">1</text>
+<text text-anchor="middle" x="636.47" y="-79.18" font-family="Times,serif" font-size="14.00"> &#160;(244.209µs)</text>
 </g>
 </g>
 </svg>
