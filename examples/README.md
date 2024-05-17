@@ -2,7 +2,11 @@
 
 [Abstracts](abstracts)
 
-[Collect Random Integers Stream Sorted](randomints/)
+[Random Hashes With N-Zeros](randomhashes)
 
-[Count Word In File](wordcount/)
+[Random Integers Collect Sorted](randomints)
+
+[Random Plan](randomplan)
+
+[Count Word In File](wordcount)
 

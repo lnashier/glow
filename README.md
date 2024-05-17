@@ -1,63 +1,105 @@
-# Computational Framework
+# 🌟Computational Framework
 
 [![GoDoc](https://pkg.go.dev/badge/github.com/lnashier/glow)](https://pkg.go.dev/github.com/lnashier/glow)
 [![Go Report Card](https://goreportcard.com/badge/github.com/lnashier/glow)](https://goreportcard.com/report/github.com/lnashier/glow)
 
 The `glow` is an idiomatic general purpose computational framework.
 
+## Installation
+
+Simply add the following import to your code, and then `go [build|run|test]` will automatically fetch the necessary
+dependencies:
+
+```
+import "github.com/lnashier/glow"
+```
+
 ## Examples
 
-[Examples](examples/)
+[Examples](examples)
 
-## Definitions
+## Node Function
 
-### Network
+Node Function is the basic unit in the `glow` that processes the data.
 
-### Node
+### Basic Function
 
-Node is the basic 
-#### Isolated Node
+Basic Node Function (`BasicFunc`) allows a Node to operate in "push-pull" mode. The Network pushes data to BasicFunc,
+and it waits for the function to return with output data, which is then forwarded to connected Node(s).
 
-With no Links, Node is considered an isolated-node.
+```
+func(ctx context.Context, data any) (any, error)
+```
 
-#### Seed Node
+### Emit Function
 
-With only egress Links, Node is considered a seed-node.
+Emit Node Function (`EmitFunc`) allows a Node to operate in "push-push" mode. The Network pushes data to EmitFunc, and
+the function emits zero or more data points back to the Network through the supplied callback emit function. Eventually,
+it returns control back to the Network.
 
-#### Transit Node
+```
+func(ctx context.Context, data any, emit func(any)) error
+```
 
-With both egress and ingress Links, Node is considered a transit-node.
+## Node
 
-#### Terminal Node
+A Node is an abstraction over `Node Function` that forms connections among Node Functions, enabling the flow of data
+through the `glow` Network.
 
-With only ingress Links, Node is considered a terminus-node.
+### Isolated Node
 
-### Node Function
+A Node with no links is considered an isolated-node.
 
-### Basic
+### Seed Node
 
-### EmitFunc
+A Node with only egress links is considered a seed-node.
 
-### Link
+### Transit Node
 
-#### Paused Link
+A Node with both egress and ingress links is considered a transit-node.
 
-#### Removed Link
+### Terminal Node
 
-### Mode
+A Node with only ingress links is considered a terminal-node.
 
-#### Broadcaster Mode
+## Link
 
-#### Distributor Mode
+A Link represents a connection between two Nodes, facilitating data flow from one Node to another.
 
-### Session
+### Paused Link
 
-### Integrity Checks
+A Paused Link temporarily stops the flow of data between Nodes without removing the Link itself from the Network.
 
-#### Avoid Cycles
+### Removed Link
 
-#### Ignore Isolated Nodes
+A Removed Link permanently disconnects two Nodes, ceasing all data flow through that Link. The Network may be purged to
+physically remove such links.
 
-### Metrics
+## Mode
 
-#### Link Tally
+### Broadcaster Mode
+
+In Broadcaster Mode, a Node broadcasts all incoming data to all its outgoing links, ensuring that all downstream Nodes
+receive the same data.
+
+### Distributor Mode
+
+In Distributor Mode, a Node distributes incoming data among its outgoing links, balancing the data load across multiple
+downstream Nodes.
+
+## Session
+
+A Session represents a single instance of data processing within the Network. It tracks the state and progress of data
+as it moves through the Nodes and Links.
+
+## Integrity Checks
+
+### Avoid Cycles
+
+This check ensures that the Network remains a Directed Acyclic Graph (DAG), preventing any circular dependencies or
+infinite loops.
+
+### Ignore Isolated Nodes
+
+This option allows the Network to continue operating even when there are isolated Nodes, which have no incoming or
+outgoing links.

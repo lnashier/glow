@@ -39,11 +39,11 @@ func Network() *glow.Network {
 	node2ID := "node-2"
 	addSeed(n, node2ID, false)
 
-	// A seed node working in distributor and emitter mode
+	// A seed node with EmitFunc working in distributor
 	node3ID := "node-3"
 	addSeed(n, node3ID, true, glow.Distributor())
 
-	// A seed node working in broadcaster and emitter mode
+	// A seed node with EmitFunc working in broadcaster
 	node4ID := "node-4"
 	addSeed(n, node4ID, true)
 
@@ -55,11 +55,11 @@ func Network() *glow.Network {
 	node6ID := "node-6"
 	addNode(n, node6ID, false)
 
-	// A transit node working in distributor and emitter mode
+	// A transit node with EmitFunc working in distributor
 	node7ID := "node-7"
 	addNode(n, node7ID, true, glow.Distributor())
 
-	// A transit node working in broadcaster and emitter mode
+	// A transit node with EmitFunc working in broadcaster
 	node8ID := "node-8"
 	addNode(n, node8ID, true)
 
@@ -98,12 +98,12 @@ func Network() *glow.Network {
 	return n
 }
 
-func addSeed(net *glow.Network, nodeID string, emitter bool, opt ...glow.NodeOpt) {
+func addSeed(net *glow.Network, nodeID string, emitting bool, opt ...glow.NodeOpt) {
 	seedCounts.Store(nodeID, 0)
 	nodeInCounts.Store(nodeID, make([]int, 0))
 	nodeOutCounts.Store(nodeID, make([]int, 0))
 
-	if emitter {
+	if emitting {
 		opt = append(opt, glow.EmitFunc(func(ctx context.Context, _ any, emit func(any)) error {
 			for {
 				select {
@@ -143,11 +143,11 @@ func addSeed(net *glow.Network, nodeID string, emitter bool, opt ...glow.NodeOpt
 	net.AddNode(append(opt, glow.Key(nodeID))...)
 }
 
-func addNode(net *glow.Network, nodeID string, emitter bool, opt ...glow.NodeOpt) {
+func addNode(net *glow.Network, nodeID string, emitting bool, opt ...glow.NodeOpt) {
 	nodeInCounts.Store(nodeID, make([]int, 0))
 	nodeOutCounts.Store(nodeID, make([]int, 0))
 
-	if emitter {
+	if emitting {
 		opt = append(opt, glow.EmitFunc(func(ctx context.Context, in1 any, emit func(any)) error {
 			in := in1.(int)
 			inCounts, _ := nodeInCounts.Load(nodeID)
