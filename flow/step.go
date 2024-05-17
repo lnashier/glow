@@ -44,8 +44,7 @@ const (
 
 var linearKinds = []StepKind{
 	PeekStep,
-	CollectStep,
-	CountStep,
+	CombineStep,
 }
 
 type Step struct {
@@ -100,9 +99,12 @@ func Replicas(v int) StepOpt {
 	}
 }
 
-func Connection(v ...string) StepOpt {
+// Connection sets up a connection between a Step and the Steps identified by the provided key(s).
+// The provided keys represent upstream steps, enabling data to flow from these Steps to the current Step.
+// Upstream steps can either distribute or broadcast data.
+func Connection(key ...string) StepOpt {
 	return func(o *stepOpts) {
-		o.connections = v
+		o.connections = append(o.connections, key...)
 	}
 }
 
@@ -144,6 +146,21 @@ func Peek(pf func(in any)) StepOpt {
 	}
 }
 
+// Combine merges the elements of multiple streams into a single stream, concatenating
+// all the data points from the individual streams in the order they arrive.
+// This enforces the flow to become linear, ensuring that each data point is
+// processed sequentially.
+// The combined stream can then be broadcast or distributed.
+func Combine() StepOpt {
+	return func(o *stepOpts) {
+		o.kind = CombineStep
+		o.sf = func(_ context.Context, in any, emit func(any)) error {
+			emit(in)
+			return nil
+		}
+	}
+}
+
 // Filter applies a filtering function to each element in the input data stream.
 // The filtering function is invoked with an input element and returns a boolean
 // indicating whether the element should be retained or not.
@@ -163,20 +180,6 @@ func Filter(ff func(in any) bool) StepOpt {
 					emit(in)
 				}
 			}
-			return nil
-		}
-	}
-}
-
-// Combine combines the elements of streams into a single stream, concatenating
-// all the data points from the individual streams in the order they arrive.
-// It enforces the flow to become linear, ensuring that each data point is
-// processed sequentially.
-func Combine() StepOpt {
-	return func(o *stepOpts) {
-		o.kind = CombineStep
-		o.sf = func(_ context.Context, in any, emit func(any)) error {
-			emit(in)
 			return nil
 		}
 	}
