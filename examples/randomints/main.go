@@ -38,11 +38,11 @@ func main() {
 		}).
 		Collect(
 			func(ints []any) {
-				fmt.Printf("\n%v\n", ints)
+				fmt.Printf("\n%v (%d)\n", ints, len(ints))
 			},
-			flow.Compare(func(a any, b any) int {
+			func(a any, b any) int {
 				return a.(int) - b.(int)
-			}),
+			},
 		).
 		Draw("bin/network.gv").
 		Run(context.Background()).

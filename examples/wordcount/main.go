@@ -23,7 +23,7 @@ func main() {
 		}, flow.Distributor(), flow.StepKey("tokenizer")).
 		Filter(func(in any) bool {
 			return strings.HasPrefix(in.(string), "test")
-		}, flow.Concurrency(5)).
+		}, flow.Replicas(5)).
 		Count(func(num int) {
 			fmt.Println("Count:", num)
 		}).

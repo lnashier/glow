@@ -35,10 +35,10 @@ func main() {
 				}
 			}
 			return nil
-		}, flow.StepKey("generator"), flow.Concurrency(10), flow.Distributor()).
+		}, flow.StepKey("generator"), flow.Replicas(2), flow.Distributor()).
 		Filter(func(in any) bool {
-			return strings.HasPrefix(in.(string), "000000")
-		}, flow.StepKey("filter"), flow.Concurrency(10)).
+			return strings.HasPrefix(in.(string), "000")
+		}, flow.StepKey("filter"), flow.Replicas(4)).
 		Peek(func(in any) {
 			found = true
 			fmt.Println(in.(string))
