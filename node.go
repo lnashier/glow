@@ -23,11 +23,11 @@ import (
 //     In broadcaster mode, Node broadcasts all incoming data to all outgoing links.
 //     When the distributor flag is enabled, a Node distributes incoming data among its outgoing links.
 //     Distributor mode is not functional for isolated and terminus nodes.
-//   - By default, a Node operates in "push-pull" mode: the Network pushes data to NodeFunc,
-//     and it waits for NodeFunc to return with output data, which is then forwarded to connected Node(s).
+//   - By default, a Node operates in "push-pull" mode: the Network pushes data to BasicFunc,
+//     and it waits for BasicFunc to return with output data, which is then forwarded to connected Node(s).
 //     This behavior can be changed to "push-push" by setting the EmitFunc for the Node.
-//     In emitter mode, the Network pushes data to EmitFunc, and the Node emits data back to the Network
-//     through the supplied callback emit function.
+//     When EmitFunc is set, the Network pushes data to EmitFunc, and it emits zero or more data points back
+//     to the Network through the supplied callback emit function.
 type Node struct {
 	key         string
 	f           func(context.Context, any) (any, error)
@@ -84,9 +84,9 @@ func Distributor() NodeOpt {
 	}
 }
 
-// NodeFunc is responsible for processing incoming data on the Node.
+// BasicFunc is responsible for processing incoming data on the Node.
 // Output from the Node is forwarded to downstream connected Node(s).
-func NodeFunc(f func(ctx context.Context, data any) (any, error)) NodeOpt {
+func BasicFunc(f func(ctx context.Context, data any) (any, error)) NodeOpt {
 	return func(n *Node) {
 		n.f = f
 	}

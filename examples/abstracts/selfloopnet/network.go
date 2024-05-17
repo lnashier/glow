@@ -54,7 +54,7 @@ func Network() *glow.Network {
 
 	seedingDone := false
 
-	_, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, in1 any) (any, error) {
+	_, err := n.AddNode(glow.BasicFunc(func(ctx context.Context, in1 any) (any, error) {
 		if !seedingDone {
 			defer func() {
 				seedingDone = true

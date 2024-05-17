@@ -37,7 +37,7 @@ func Network() *glow.Network {
 	nodeInCounts.Store(node1ID, []string{})
 	nodeOutCounts.Store(node1ID, []string{})
 
-	_, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, _ any) (any, error) {
+	_, err := n.AddNode(glow.BasicFunc(func(ctx context.Context, _ any) (any, error) {
 		num, _ := seedCounts.Load(node1ID)
 
 		if num.(int) > 0 {
@@ -63,7 +63,7 @@ func Network() *glow.Network {
 	nodeInCounts.Store(node2ID, []string{})
 	nodeOutCounts.Store(node2ID, []string{})
 
-	_, err = n.AddNode(glow.NodeFunc(func(ctx context.Context, in1 any) (any, error) {
+	_, err = n.AddNode(glow.BasicFunc(func(ctx context.Context, in1 any) (any, error) {
 		in := in1.([]byte)
 		// Let's make this node take a nap for a bit, or else it's gonna go all tight loop on us
 		// and fill up the log window faster than you can say "Oops!"

@@ -62,7 +62,7 @@ func Sub1Network(n *glow.Network) {
 		nodeOutCounts.Store(i+100, []string{})
 	}
 
-	node0, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, _ any) (any, error) {
+	node0, err := n.AddNode(glow.BasicFunc(func(ctx context.Context, _ any) (any, error) {
 		xtime.SleepWithContext(ctx, time.Second*1)
 
 		num, _ := seedCounts.Load(100)
@@ -84,7 +84,7 @@ func Sub1Network(n *glow.Network) {
 		panic(err)
 	}
 
-	node1, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, in1 any) (any, error) {
+	node1, err := n.AddNode(glow.BasicFunc(func(ctx context.Context, in1 any) (any, error) {
 		in := in1.([]byte)
 		inCounts, _ := nodeInCounts.Load(101)
 		nodeInCounts.Store(101, append(inCounts.([]string), string(in)))
@@ -98,7 +98,7 @@ func Sub1Network(n *glow.Network) {
 		panic(err)
 	}
 
-	node2, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, in1 any) (any, error) {
+	node2, err := n.AddNode(glow.BasicFunc(func(ctx context.Context, in1 any) (any, error) {
 		in := in1.([]byte)
 		inCounts, _ := nodeInCounts.Load(102)
 		nodeInCounts.Store(102, append(inCounts.([]string), string(in)))
@@ -139,7 +139,7 @@ func Sub2Network(n *glow.Network) {
 		nodeOutCounts.Store(i+200, []string{})
 	}
 
-	node0, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, _ any) (any, error) {
+	node0, err := n.AddNode(glow.BasicFunc(func(ctx context.Context, _ any) (any, error) {
 		xtime.SleepWithContext(ctx, time.Second*1)
 
 		num, _ := seedCounts.Load(200)
@@ -156,7 +156,7 @@ func Sub2Network(n *glow.Network) {
 		panic(err)
 	}
 
-	node1, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, in1 any) (any, error) {
+	node1, err := n.AddNode(glow.BasicFunc(func(ctx context.Context, in1 any) (any, error) {
 		in := in1.([]byte)
 		inCounts, _ := nodeInCounts.Load(201)
 		nodeInCounts.Store(201, append(inCounts.([]string), string(in)))

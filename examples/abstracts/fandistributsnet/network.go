@@ -124,7 +124,7 @@ func addSeed(net *glow.Network, nodeID string, emitter bool, opt ...glow.NodeOpt
 			}
 		}))
 	} else {
-		opt = append(opt, glow.NodeFunc(func(ctx context.Context, _ any) (any, error) {
+		opt = append(opt, glow.BasicFunc(func(ctx context.Context, _ any) (any, error) {
 			xtime.SleepWithContext(ctx, time.Duration(1)*time.Second)
 
 			num1, _ := seedCounts.Load(nodeID)
@@ -171,7 +171,7 @@ func addNode(net *glow.Network, nodeID string, emitter bool, opt ...glow.NodeOpt
 			}
 		}))
 	} else {
-		opt = append(opt, glow.NodeFunc(func(ctx context.Context, in1 any) (any, error) {
+		opt = append(opt, glow.BasicFunc(func(ctx context.Context, in1 any) (any, error) {
 			in := in1.(int)
 			inCounts, _ := nodeInCounts.Load(nodeID)
 			nodeInCounts.Store(nodeID, append(inCounts.([]int), in))

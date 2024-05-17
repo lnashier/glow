@@ -39,7 +39,7 @@ func Network() *glow.Network {
 	n := glow.New(glow.Verbose())
 
 	node0count := 0
-	node0, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, _ any) (any, error) {
+	node0, err := n.AddNode(glow.BasicFunc(func(ctx context.Context, _ any) (any, error) {
 		// un/comment to play around, change time
 		//xtime.SleepWithContext(ctx, time.Second*5)
 		node0count++
@@ -55,7 +55,7 @@ func Network() *glow.Network {
 		panic(err)
 	}
 
-	node1, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, in1 any) (any, error) {
+	node1, err := n.AddNode(glow.BasicFunc(func(ctx context.Context, in1 any) (any, error) {
 		in := in1.([]byte)
 		// un/comment to play around, change time
 		//xtime.SleepWithContext(ctx, time.Second*1)
@@ -71,7 +71,7 @@ func Network() *glow.Network {
 		panic(err)
 	}
 
-	node2, err := n.AddNode(glow.NodeFunc(func(ctx context.Context, in1 any) (any, error) {
+	node2, err := n.AddNode(glow.BasicFunc(func(ctx context.Context, in1 any) (any, error) {
 		in := in1.([]byte)
 		// un/comment to play around, change time
 		//xtime.SleepWithContext(ctx, time.Second*1)

@@ -23,6 +23,7 @@ type Network struct {
 
 type NetworkOpt func(*Network)
 
+// Verbose enables Network to send logs to stdout.
 func Verbose() NetworkOpt {
 	return func(n *Network) {
 		n.log = func(format string, a ...any) {
@@ -31,18 +32,21 @@ func Verbose() NetworkOpt {
 	}
 }
 
+// IgnoreIsolatedNodes allows the Network to run even when there are isolated nodes.
 func IgnoreIsolatedNodes() NetworkOpt {
 	return func(n *Network) {
 		n.ignoreIsolatedNodes = true
 	}
 }
 
+// StopGracetime sets the grace period for which the Network waits for processes to finish before stopping.
 func StopGracetime(t time.Duration) NetworkOpt {
 	return func(n *Network) {
 		n.stopGracetime = t
 	}
 }
 
+// PreventCycles ensures the Network remains a Directed Acyclic Graph (DAG).
 func PreventCycles() NetworkOpt {
 	return func(n *Network) {
 		n.preventCycles = true
@@ -108,8 +112,7 @@ func (n *Network) Start(ctx context.Context) error {
 }
 
 // Stop signals the Network to cease all communications.
-// If stop grace period is set, communications will terminate
-// after that period.
+// If stop grace period is set, communications will terminate after that period.
 func (n *Network) Stop() error {
 	n.log("Stopping network")
 	defer n.log("Network signaled to stop")
@@ -154,12 +157,6 @@ func (n *Network) Purge() error {
 	return nil
 }
 
-func (n *Network) apply(opt ...NetworkOpt) {
-	for _, o := range opt {
-		o(n)
-	}
-}
-
 func (n *Network) Uptime() time.Duration {
 	if n.session.start.IsZero() {
 		return 0
@@ -168,6 +165,12 @@ func (n *Network) Uptime() time.Duration {
 		return time.Since(n.session.start)
 	}
 	return n.session.stop.Sub(n.session.start)
+}
+
+func (n *Network) apply(opt ...NetworkOpt) {
+	for _, o := range opt {
+		o(n)
+	}
 }
 
 type session struct {

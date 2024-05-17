@@ -1,31 +1,63 @@
-# Computational Network Framework
+# Computational Framework
 
 [![GoDoc](https://pkg.go.dev/badge/github.com/lnashier/glow)](https://pkg.go.dev/github.com/lnashier/glow)
 [![Go Report Card](https://goreportcard.com/badge/github.com/lnashier/glow)](https://goreportcard.com/report/github.com/lnashier/glow)
 
-The `glow` is an idiomatic general purpose computational network framework.
+The `glow` is an idiomatic general purpose computational framework.
 
 ## Examples
 
 [Examples](examples/)
 
-## Wish List
+## Definitions
 
-- [x] Seed node
-- [x] Terminal node
-- [x] Transit node
-- [x] Broadcaster mode
-- [x] Distributor mode
-- [ ] ~~Router mode~~
-- [x] Emitter mode
-- [x] Sessions
-- [x] Signaling
-- [x] Pause links
-- [ ] Network integrity checks
-  - [x] Avoid cycles
-  - [x] Isolated nodes
-- [x] Link tally
-- [ ] ~~Most & least used paths~~
-- [ ] ~~Fastest & slowest paths~~
-- [ ] ~~Network modifications while network is up (e.g. Remove link, Add Link)~~
-- [ ] ~~ACK~~
+### Network
+
+### Node
+
+Node is the basic 
+#### Isolated Node
+
+With no Links, Node is considered an isolated-node.
+
+#### Seed Node
+
+With only egress Links, Node is considered a seed-node.
+
+#### Transit Node
+
+With both egress and ingress Links, Node is considered a transit-node.
+
+#### Terminal Node
+
+With only ingress Links, Node is considered a terminus-node.
+
+### Node Function
+
+### Basic
+
+### EmitFunc
+
+### Link
+
+#### Paused Link
+
+#### Removed Link
+
+### Mode
+
+#### Broadcaster Mode
+
+#### Distributor Mode
+
+### Session
+
+### Integrity Checks
+
+#### Avoid Cycles
+
+#### Ignore Isolated Nodes
+
+### Metrics
+
+#### Link Tally
