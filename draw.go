@@ -36,7 +36,7 @@ func DOT(n *Network) ([]byte, error) {
 		"netProp": func(prop string) any {
 			switch prop {
 			case "label":
-				return fmt.Sprintf("Network Uptime:%s\n", n.Uptime())
+				return fmt.Sprintf("Network Uptime: %s\n", n.Uptime())
 			default:
 				return ""
 			}
