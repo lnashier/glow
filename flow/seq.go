@@ -61,19 +61,6 @@ func (s *Seq) Count(cb func(num int), opt ...StepOpt) *Seq {
 	return s
 }
 
-func (s *Seq) step(kind StepKind, opt ...StepOpt) *Seq {
-	opts := (&stepOpts{}).apply(opt...)
-	key := opts.key
-	// Even if key is supplied, call keygen() to keep node numbers relevant
-	keyPart := s.keygen()
-	if len(key) == 0 {
-		key = fmt.Sprintf("%s-%s", keyPart, kind)
-	}
-	s.plan.Step(append(opt, StepKey(key), Connection(s.preStep))...)
-	s.preStep = key
-	return s
-}
-
 func (s *Seq) Run(ctx context.Context) *Seq {
 	s.plan.Run(ctx)
 	return s
@@ -96,4 +83,17 @@ func (s *Seq) Uptime(uf func(d time.Duration)) *Seq {
 
 func (s *Seq) Error() error {
 	return s.plan.err
+}
+
+func (s *Seq) step(kind StepKind, opt ...StepOpt) *Seq {
+	opts := (&stepOpts{}).apply(opt...)
+	key := opts.key
+	// Even if key is supplied, call keygen() to keep node numbers relevant
+	keyPart := s.keygen()
+	if len(key) == 0 {
+		key = fmt.Sprintf("%s-%s", keyPart, kind)
+	}
+	s.plan.Step(append(opt, StepKey(key), Connection(s.preStep))...)
+	s.preStep = key
+	return s
 }
