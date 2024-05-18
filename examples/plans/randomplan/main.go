@@ -12,7 +12,6 @@ func main() {
 	err := flow.New().
 		Step(
 			flow.StepKey("generator"),
-			flow.Distributor(),
 			flow.Read(func(ctx context.Context, emit func(out any)) error {
 				for range 50 {
 					select {
@@ -24,13 +23,14 @@ func main() {
 				}
 				return nil
 			}),
+			flow.Distributor(),
 		).
 		Step(
 			flow.StepKey("filter"),
-			flow.Replicas(4),
 			flow.Filter(func(in any) bool {
 				return in.(int)%2 == 0
 			}),
+			flow.Replicas(4),
 			flow.Connection("generator"),
 		).
 		Step(

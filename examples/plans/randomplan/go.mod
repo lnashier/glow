@@ -2,7 +2,7 @@ module randomplan
 
 go 1.22.3
 
-replace github.com/lnashier/glow => ../../../glow
+replace github.com/lnashier/glow => ../../../../glow
 
 require github.com/lnashier/glow v0.0.0
 
