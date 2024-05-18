@@ -17,7 +17,7 @@ func Sequential(opt ...glow.NetworkOpt) *Seq {
 	opt = append(opt, glow.PreventCycles())
 	return &Seq{
 		plan:   New(opt...),
-		keygen: keygen("step"),
+		keygen: Keygen("step"),
 	}
 }
 
