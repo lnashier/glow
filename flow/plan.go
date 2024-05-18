@@ -13,7 +13,7 @@ import (
 type Plan struct {
 	net       *glow.Network
 	once      *sync.Once
-	opts      [][]StepOpt
+	opts      []*stepOpts
 	err       error
 	callbacks []func()
 }
@@ -26,7 +26,7 @@ func New(opt ...glow.NetworkOpt) *Plan {
 }
 
 func (p *Plan) Step(opt ...StepOpt) *Plan {
-	p.opts = append(p.opts, opt)
+	p.opts = append(p.opts, (&stepOpts{}).apply(opt...))
 	return p
 }
 
@@ -68,11 +68,14 @@ func (p *Plan) Error() error {
 
 func (p *Plan) build() {
 	p.once.Do(func() {
+		replicaKeygen := func(key string, r int) string {
+			return fmt.Sprintf("%s-r%d", key, r)
+		}
+
 		steps := make(map[string][]*Step)
 
-		for _, opt := range p.opts {
-			opts := &stepOpts{}
-			opts.apply(opt...)
+		// make nodes
+		for _, opts := range p.opts {
 			if opts.replicas < 1 {
 				opts.replicas = 1
 			}
@@ -86,7 +89,7 @@ func (p *Plan) build() {
 			for i := range opts.replicas {
 				replicaKey := opts.key
 				if opts.replicas > 1 && len(opts.key) > 0 {
-					replicaKey = fmt.Sprintf("%s-r%d", opts.key, i+1)
+					replicaKey = replicaKeygen(opts.key, i+1)
 				}
 				nodeOpts := []glow.NodeOpt{
 					glow.Key(replicaKey),
@@ -98,24 +101,31 @@ func (p *Plan) build() {
 				nodeID, err := p.net.AddNode(nodeOpts...)
 				p.appendError(err)
 				if err == nil {
-					step := &Step{
+					replicas = append(replicas, &Step{
 						id:   nodeID,
 						kind: opts.kind,
-					}
-					replicas = append(replicas, step)
-					steps[opts.key] = replicas
+					})
 				}
 			}
+
+			steps[opts.key] = replicas
 
 			if opts.callback != nil && p.Error() == nil {
 				p.callbacks = append(p.callbacks, opts.callback)
 			}
+		}
 
-			// make connections
-			for _, x := range opts.connections {
-				for _, xReplica := range steps[x] {
-					for _, y := range replicas {
-						p.appendError(p.net.AddLink(xReplica.id, y.id))
+		// make links
+		for _, y := range p.opts {
+			for _, yReplica := range steps[y.key] {
+				for _, x := range y.connections {
+					xReplicas := steps[x]
+					if len(xReplicas) < 1 {
+						p.appendError(fmt.Errorf("%s connecting to unknown %s", y.key, x))
+						continue
+					}
+					for _, xReplica := range xReplicas {
+						p.appendError(p.net.AddLink(xReplica.id, yReplica.id))
 					}
 				}
 			}

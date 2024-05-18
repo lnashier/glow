@@ -18,4 +18,4 @@
 - [ ] ~~Fastest & slowest paths~~
 - [ ] ~~Network modifications while network is up (e.g. Remove link, Add Link)~~
 - [ ] ~~ACK~~
-- [ ] DOT to glow
+- [ ] `DOT` to `glow`
