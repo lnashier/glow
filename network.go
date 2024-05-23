@@ -136,7 +136,7 @@ func (n *Network) Purge() error {
 
 	// clean up removed links
 	for _, link := range links {
-		if link.deleted {
+		if link.removed {
 			err := n.removeLink(link)
 			if err != nil {
 				return err
