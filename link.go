@@ -17,17 +17,13 @@ import (
 type Link struct {
 	x       *Node
 	y       *Node
-	ch      *channel
-	tally   int
-	once    sync.Once
-	closed  bool
 	paused  bool
 	removed bool
-}
-
-type channel struct {
-	ch   chan any
-	size int
+	closed  bool
+	once    sync.Once
+	ch      chan any
+	size    int
+	tally   int
 }
 
 type LinkOpt func(*Link)
@@ -41,7 +37,7 @@ func (l *Link) apply(opt ...LinkOpt) {
 // Size sets bandwidth for the Link.
 func Size(k int) LinkOpt {
 	return func(l *Link) {
-		l.ch.size = k
+		l.size = k
 	}
 }
 
@@ -113,9 +109,8 @@ func (n *Network) AddLink(from, to string, opt ...LinkOpt) error {
 	defer n.mu.Unlock()
 
 	link := &Link{
-		x:  xNode,
-		y:  yNode,
-		ch: &channel{},
+		x: xNode,
+		y: yNode,
 	}
 	link.apply(opt...)
 
@@ -129,8 +124,8 @@ func (n *Network) AddLink(from, to string, opt ...LinkOpt) error {
 		}
 	}
 
-	if link.ch.ch == nil {
-		link.ch.ch = make(chan any, link.ch.size)
+	if link.ch == nil {
+		link.ch = make(chan any, link.size)
 	}
 
 	if _, ok := n.egress[from]; !ok {
@@ -307,7 +302,7 @@ func (n *Network) Egress(key string) []*Link {
 func (n *Network) closeEgress(node *Node) {
 	for _, link := range n.Egress(node.Key()) {
 		link.once.Do(func() {
-			close(link.ch.ch)
+			close(link.ch)
 			link.closed = true
 		})
 	}
@@ -319,7 +314,7 @@ func (n *Network) refreshEgress(node *Node) {
 		if link.closed {
 			link.closed = false
 			link.once = sync.Once{}
-			link.ch.ch = make(chan any, link.ch.size)
+			link.ch = make(chan any, link.size)
 		}
 	}
 }

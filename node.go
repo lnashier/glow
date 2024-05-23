@@ -335,7 +335,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 						case <-ctx.Done():
 							n.log("Seed(%s/%s) net-ctx done while distributing Data(%v) To Nodes(%s)", node.Key(), egressLink.x.Key(), nodeData, egressYs)
 							return nil
-						case egressLink.ch.ch <- nodeData:
+						case egressLink.ch <- nodeData:
 							n.log("Seed(%s/%s) Distributed Data(%v) To Nodes(%s)", node.Key(), egressLink.x.Key(), nodeData, egressYs)
 						}
 					} else {
@@ -346,7 +346,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 							case <-ctx.Done():
 								n.log("Seed(%s/%s) net-ctx done while sending Data(%v) To Node(%s)", node.Key(), egressLink.x.Key(), nodeData, egressLink.y.Key())
 								return nil
-							case egressLink.ch.ch <- nodeData:
+							case egressLink.ch <- nodeData:
 								n.log("Seed(%s/%s) Sent Data(%v) To Node(%s)", node.Key(), egressLink.x.Key(), nodeData, egressLink.y.Key())
 							}
 						}
@@ -396,7 +396,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 						case <-inDataCtx.Done():
 							n.log("Node(%s/%s) in-node-ctx done for Node(%s)", node.Key(), ingressLink.y.Key(), ingressLink.x.Key())
 							return nil
-						case inData, ok := <-ingressLink.ch.ch:
+						case inData, ok := <-ingressLink.ch:
 							if !ok {
 								n.log("Node(%s/%s) To Node(%s) Link Closed", node.Key(), ingressLink.y.Key(), ingressLink.x.Key())
 								close(nodeDataCh)
@@ -439,7 +439,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 								case <-nodeCtx.Done():
 									n.log("Node(%s/%s) node-ctx done while distributing Data(%v) Of(%s) To Nodes(%s)", node.Key(), egressLink.x.Key(), nodeData, ingressLink.x.Key(), egressYs)
 									return nil
-								case egressLink.ch.ch <- nodeData:
+								case egressLink.ch <- nodeData:
 									n.log("Node(%s/%s) Distributed Data(%v) Of(%s) To Nodes(%s)", node.Key(), egressLink.x.Key(), nodeData, ingressLink.y.Key(), egressYs)
 								}
 							} else {
@@ -449,7 +449,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 									case <-nodeCtx.Done():
 										n.log("Node(%s/%s) node-ctx done while sending Data(%v) Of(%s) To Node(%s)", node.Key(), egressLink.x.Key(), nodeData, ingressLink.x.Key(), egressLink.y.Key())
 										return nil
-									case egressLink.ch.ch <- nodeData:
+									case egressLink.ch <- nodeData:
 										n.log("Node(%s/%s) Sent Data(%v) Of(%s) To Node(%s)", node.Key(), egressLink.x.Key(), nodeData, ingressLink.y.Key(), egressLink.y.Key())
 									}
 								}
@@ -498,7 +498,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 					case <-nodeCtx.Done():
 						n.log("Terminal(%s/%s) node-ctx done for Node(%s)", node.Key(), ingressLink.y.Key(), ingressLink.x.Key())
 						return nil
-					case inData, ok := <-ingressLink.ch.ch:
+					case inData, ok := <-ingressLink.ch:
 						if !ok {
 							n.log("Terminal(%s/%s) To Node(%s) Link Closed", node.Key(), ingressLink.y.Key(), ingressLink.x.Key())
 							return nil
