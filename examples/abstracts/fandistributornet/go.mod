@@ -1,4 +1,4 @@
-module fandistributsnet
+module fandistributornet
 
 go 1.22.3
 

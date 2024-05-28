@@ -5,22 +5,25 @@ import (
 	"time"
 )
 
-// Link captures connection between two nodes.
-// Data flows from x to y over the [Link].
+// Link captures the connection between two nodes.
+// Data flows from x to y over the Link.
+// A Link can have 3 states:
+//   - Closed - The Link enters the closed state when the Link.From Node goes away.
+//     The Link remains in this state until a new session (Network.Start) or system restart.
+//   - Paused - The Link enters the paused state when Network.PauseLink is called.
+//     The Link remains in this state until resumed (Network.ResumeLink) or system restart.
+//   - Removed - The Link enters the removed state when Network.RemoveLink is called.
+//     The Link remains in this state until added back (Network.AddLink) or system restart.
 type Link struct {
 	x       *Node
 	y       *Node
-	ch      *channel
-	tally   int
 	paused  bool
-	deleted bool
-}
-
-type channel struct {
-	once   sync.Once
-	closed bool
-	ch     chan any
-	size   int
+	removed bool
+	closed  bool
+	once    sync.Once
+	ch      chan any
+	size    int
+	tally   int
 }
 
 type LinkOpt func(*Link)
@@ -34,18 +37,8 @@ func (l *Link) apply(opt ...LinkOpt) {
 // Size sets bandwidth for the Link.
 func Size(k int) LinkOpt {
 	return func(l *Link) {
-		l.ch.size = k
+		l.size = k
 	}
-}
-
-// From returns the key of the "from" Node connected by this link.
-func (l *Link) From() *Node {
-	return l.x
-}
-
-// To returns the key of the "to" Node connected by this link.
-func (l *Link) To() *Node {
-	return l.y
 }
 
 // Tally returns the total count of data transmitted over the link thus far.
@@ -54,7 +47,7 @@ func (l *Link) Tally() int {
 }
 
 func (l *Link) Uptime() time.Duration {
-	if l.deleted || l.paused {
+	if l.removed || l.paused {
 		return 0
 	}
 	if !l.x.session.start.IsZero() && !l.y.session.start.IsZero() {
@@ -72,14 +65,14 @@ func (l *Link) Uptime() time.Duration {
 }
 
 // AddLink connects from-node to to-node.
-// Once Link is made, nodes are said to be communicating over the Link from -> to.
+// Once Link is made, nodes are said to be communicating over the Link in the direction from -> to.
 // See:
 //   - RemoveLink
 //   - PauseLink
 //   - ResumeLink
 func (n *Network) AddLink(from, to string, opt ...LinkOpt) error {
 	if link, _ := n.link(from, to); link != nil {
-		if link.deleted {
+		if link.removed {
 			return ErrNetworkNeedPurging
 		}
 		return ErrLinkAlreadyExists
@@ -106,9 +99,8 @@ func (n *Network) AddLink(from, to string, opt ...LinkOpt) error {
 	defer n.mu.Unlock()
 
 	link := &Link{
-		x:  xNode,
-		y:  yNode,
-		ch: &channel{},
+		x: xNode,
+		y: yNode,
 	}
 	link.apply(opt...)
 
@@ -122,8 +114,8 @@ func (n *Network) AddLink(from, to string, opt ...LinkOpt) error {
 		}
 	}
 
-	if link.ch.ch == nil {
-		link.ch.ch = make(chan any, link.ch.size)
+	if link.ch == nil {
+		link.ch = make(chan any, link.size)
 	}
 
 	if _, ok := n.egress[from]; !ok {
@@ -157,7 +149,7 @@ func (n *Network) RemoveLink(from, to string) error {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
-	link.deleted = true
+	link.removed = true
 
 	return nil
 }
@@ -226,7 +218,7 @@ func (n *Network) Link(from, to string) (*Link, error) {
 	if err != nil {
 		return nil, err
 	}
-	if link.deleted {
+	if link.removed {
 		return nil, ErrLinkNotFound
 	}
 
@@ -296,22 +288,23 @@ func (n *Network) Egress(key string) []*Link {
 	return links
 }
 
-// closeEgress closes all outgoing links for the Node.
-func (n *Network) closeEgress(key string) {
-	for _, link := range n.Egress(key) {
-		link.ch.once.Do(func() {
-			close(link.ch.ch)
-			link.ch.closed = true
+// closeEgress closes all outgoing Link(s) for the Node.
+func (n *Network) closeEgress(node *Node) {
+	for _, link := range n.Egress(node.Key()) {
+		link.once.Do(func() {
+			close(link.ch)
+			link.closed = true
 		})
 	}
 }
 
-func (n *Network) refreshLinks(node *Node) {
+// refreshEgress opens all outgoing Link(s) for the Node.
+func (n *Network) refreshEgress(node *Node) {
 	for _, link := range n.Egress(node.Key()) {
-		if link.ch.closed {
-			link.ch.closed = false
-			link.ch.once = sync.Once{}
-			link.ch.ch = make(chan any, link.ch.size)
+		if link.closed {
+			link.closed = false
+			link.once = sync.Once{}
+			link.ch = make(chan any, link.size)
 		}
 	}
 }

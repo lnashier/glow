@@ -12,7 +12,7 @@
 
 [Fan In Fan Out Broadcast Network](fannet)
 
-[Fan In Fan Out Distribution Network](fandistributsnet)
+[Fan In Fan Out Distribution Network](fandistributornet)
 
 [Multiple Networks](subnet)
 

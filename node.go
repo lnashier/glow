@@ -101,8 +101,8 @@ func EmitFunc(f func(ctx context.Context, data any, emit func(any)) error) NodeO
 	}
 }
 
-// AddNode adds a new Node in the network.
-// Node key is retrieved from the provided [Key] function if not given.
+// AddNode adds a new Node in the Network.
+// Node key is retrieved from the provided [KeyFunc] function if not given.
 func (n *Network) AddNode(opt ...NodeOpt) (string, error) {
 	// check if session is in progress
 	n.session.mu.RLock()
@@ -176,7 +176,7 @@ func (n *Network) removeNode(k string) error {
 	return nil
 }
 
-// Nodes returns all the nodes in the Network.
+// Nodes returns all the Node(s) in the Network.
 func (n *Network) Nodes() []*Node {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
@@ -197,8 +197,8 @@ func (n *Network) Keys() []string {
 	return keys
 }
 
-// Seeds returns all the nodes that have only egress links.
-// Network.Node should be called to get actual node.
+// Seeds returns all the nodes that have only egress Link(s).
+// Network.Node should be called to get actual Node.
 func (n *Network) Seeds() []string {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
@@ -214,7 +214,7 @@ func (n *Network) Seeds() []string {
 	return keys
 }
 
-// Terminals returns all the nodes that have only ingress links.
+// Terminals returns all the nodes that have only ingress Link(s).
 // Network.Node should be called to get actual Node.
 func (n *Network) Terminals() []string {
 	n.mu.RLock()
@@ -236,10 +236,10 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 	defer n.log("Node(%s) shut down", node.Key())
 
 	ingress := slices.DeleteFunc(n.Ingress(node.Key()), func(l *Link) bool {
-		return l.paused || l.deleted
+		return l.paused || l.removed
 	})
 	egress := slices.DeleteFunc(n.Egress(node.Key()), func(l *Link) bool {
-		return l.paused || l.deleted
+		return l.paused || l.removed
 	})
 
 	n.log("Node(%s) ingress(%v) egress(%v)", node.Key(), ingress, egress)
@@ -267,7 +267,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 	case len(ingress) == 0 && len(egress) > 0:
 		n.log("Seed Node(%s) is running", node.Key())
 		defer n.log("Seed Node(%s) going away", node.Key())
-		defer n.closeEgress(node.Key())
+		defer n.closeEgress(node)
 
 		// When the seed-node has EmitFunc set, the node function is called once.
 		// The seed-node has the option to emit as many data points as needed during
@@ -279,7 +279,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 			// When the seed-node has BasicFunc set, the node function is invoked repeatedly
 			// until it does not return ErrSeedingDone or ErrNodeGoingAway.
 			// This indicates that the seed-node has completed its seeding process.
-			nf = func(ctx context.Context, in any, emit func(any)) error {
+			nf = func(ctx context.Context, _ any, emit func(any)) error {
 				for {
 					select {
 					case <-ctx.Done():
@@ -306,14 +306,14 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 
 		nodeWg.Go(func() error {
 			// There is no incoming data, so nothing is passed to node function.
-			err := nf(nodeCtx, nil, func(nodeData any) {
+			nodeErr := nf(nodeCtx, nil, func(nodeData any) {
 				select {
 				case <-nodeCtx.Done():
 				case nodeDataCh <- nodeData:
 				}
 			})
 			close(nodeDataCh)
-			return err
+			return nodeErr
 		})
 
 		nodeWg.Go(func() error {
@@ -335,7 +335,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 						case <-ctx.Done():
 							n.log("Seed(%s/%s) net-ctx done while distributing Data(%v) To Nodes(%s)", node.Key(), egressLink.x.Key(), nodeData, egressYs)
 							return nil
-						case egressLink.ch.ch <- nodeData:
+						case egressLink.ch <- nodeData:
 							n.log("Seed(%s/%s) Distributed Data(%v) To Nodes(%s)", node.Key(), egressLink.x.Key(), nodeData, egressYs)
 						}
 					} else {
@@ -346,7 +346,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 							case <-ctx.Done():
 								n.log("Seed(%s/%s) net-ctx done while sending Data(%v) To Node(%s)", node.Key(), egressLink.x.Key(), nodeData, egressLink.y.Key())
 								return nil
-							case egressLink.ch.ch <- nodeData:
+							case egressLink.ch <- nodeData:
 								n.log("Seed(%s/%s) Sent Data(%v) To Node(%s)", node.Key(), egressLink.x.Key(), nodeData, egressLink.y.Key())
 							}
 						}
@@ -366,9 +366,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 	case len(ingress) > 0 && len(egress) > 0:
 		n.log("Transit Node(%s) is running", node.Key())
 		defer n.log("Transit Node(%s) going away", node.Key())
-		defer n.closeEgress(node.Key())
-
-		nodeWg, nodeCtx := errgroup.WithContext(ctx)
+		defer n.closeEgress(node)
 
 		// When transit-node has EmitFunc set, the node function is called for every incoming data point.
 		// Transit-node can choose to emit as many data points and return control back to get next incoming data point.
@@ -385,6 +383,8 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 			}
 		}
 
+		nodeWg, nodeCtx := errgroup.WithContext(ctx)
+
 		for _, ingressLink := range ingress {
 			nodeWg.Go(func() error {
 				inDataWg, inDataCtx := errgroup.WithContext(nodeCtx)
@@ -396,7 +396,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 						case <-inDataCtx.Done():
 							n.log("Node(%s/%s) in-node-ctx done for Node(%s)", node.Key(), ingressLink.y.Key(), ingressLink.x.Key())
 							return nil
-						case inData, ok := <-ingressLink.ch.ch:
+						case inData, ok := <-ingressLink.ch:
 							if !ok {
 								n.log("Node(%s/%s) To Node(%s) Link Closed", node.Key(), ingressLink.y.Key(), ingressLink.x.Key())
 								close(nodeDataCh)
@@ -405,13 +405,15 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 							ingressLink.tally++
 							n.log("Node(%s/%s) Received Data(%v) From(%s)", node.Key(), ingressLink.y.Key(), inData, ingressLink.x.Key())
 
-							if err := nf(inDataCtx, inData, func(nodeData any) {
+							nodeErr := nf(inDataCtx, inData, func(nodeData any) {
 								select {
 								case <-inDataCtx.Done():
 								case nodeDataCh <- nodeData:
 								}
-							}); err != nil {
-								return err
+							})
+							if nodeErr != nil {
+								close(nodeDataCh)
+								return nodeErr
 							}
 						}
 					}
@@ -437,7 +439,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 								case <-nodeCtx.Done():
 									n.log("Node(%s/%s) node-ctx done while distributing Data(%v) Of(%s) To Nodes(%s)", node.Key(), egressLink.x.Key(), nodeData, ingressLink.x.Key(), egressYs)
 									return nil
-								case egressLink.ch.ch <- nodeData:
+								case egressLink.ch <- nodeData:
 									n.log("Node(%s/%s) Distributed Data(%v) Of(%s) To Nodes(%s)", node.Key(), egressLink.x.Key(), nodeData, ingressLink.y.Key(), egressYs)
 								}
 							} else {
@@ -447,7 +449,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 									case <-nodeCtx.Done():
 										n.log("Node(%s/%s) node-ctx done while sending Data(%v) Of(%s) To Node(%s)", node.Key(), egressLink.x.Key(), nodeData, ingressLink.x.Key(), egressLink.y.Key())
 										return nil
-									case egressLink.ch.ch <- nodeData:
+									case egressLink.ch <- nodeData:
 										n.log("Node(%s/%s) Sent Data(%v) Of(%s) To Node(%s)", node.Key(), egressLink.x.Key(), nodeData, ingressLink.y.Key(), egressLink.y.Key())
 									}
 								}
@@ -473,11 +475,10 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 			return err
 		}
 	case len(ingress) > 0 && len(egress) == 0:
-		n.log("Terminus Node(%s) is running", node.Key())
-		defer n.log("Terminus Node(%s) going away", node.Key())
+		n.log("Terminal Node(%s) is running", node.Key())
+		defer n.log("Terminal Node(%s) going away", node.Key())
 
-		nodeWg, nodeCtx := errgroup.WithContext(ctx)
-
+		// A terminal-node behaves same in either scenario, the node function is called for every incoming data point.
 		nf := node.ef
 		if nf == nil {
 			nf = func(ctx context.Context, in any, emit func(any)) error {
@@ -488,31 +489,33 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 			}
 		}
 
+		nodeWg, nodeCtx := errgroup.WithContext(ctx)
+
 		for _, ingressLink := range ingress {
 			nodeWg.Go(func() error {
 				for {
 					select {
 					case <-nodeCtx.Done():
-						n.log("Terminus(%s/%s) node-ctx done for Node(%s)", node.Key(), ingressLink.y.Key(), ingressLink.x.Key())
+						n.log("Terminal(%s/%s) node-ctx done for Node(%s)", node.Key(), ingressLink.y.Key(), ingressLink.x.Key())
 						return nil
-					case inData, ok := <-ingressLink.ch.ch:
+					case inData, ok := <-ingressLink.ch:
 						if !ok {
-							n.log("Terminus(%s/%s) To Node(%s) Link Closed", node.Key(), ingressLink.y.Key(), ingressLink.x.Key())
+							n.log("Terminal(%s/%s) To Node(%s) Link Closed", node.Key(), ingressLink.y.Key(), ingressLink.x.Key())
 							return nil
 						}
 						ingressLink.tally++
-						n.log("Terminus(%s/%s) Received Data(%v) From(%s)", node.Key(), ingressLink.y.Key(), inData, ingressLink.x.Key())
+						n.log("Terminal(%s/%s) Received Data(%v) From(%s)", node.Key(), ingressLink.y.Key(), inData, ingressLink.x.Key())
 
 						nodeErr := nf(nodeCtx, inData, func(any) {})
 						if nodeErr != nil {
 							if errors.Is(nodeErr, ErrNodeGoingAway) {
-								n.log("Terminus(%s/%s) %v for Node(%s)", node.Key(), ingressLink.y.Key(), nodeErr, ingressLink.x.Key())
+								n.log("Terminal(%s/%s) %v for Node(%s)", node.Key(), ingressLink.y.Key(), nodeErr, ingressLink.x.Key())
 								return nil
 							}
-							n.log("Terminus(%s/%s) Err: %v for Node(%s)", node.Key(), ingressLink.y.Key(), nodeErr, ingressLink.x.Key())
+							n.log("Terminal(%s/%s) Err: %v for Node(%s)", node.Key(), ingressLink.y.Key(), nodeErr, ingressLink.x.Key())
 							return nodeErr
 						}
-						n.log("Terminus(%s/%s) Consumed Data(%v) for Node(%s)", node.Key(), ingressLink.y.Key(), inData, ingressLink.x.Key())
+						n.log("Terminal(%s/%s) Consumed Data(%v) for Node(%s)", node.Key(), ingressLink.y.Key(), inData, ingressLink.x.Key())
 					}
 				}
 			})
@@ -526,9 +529,10 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 	return nil
 }
 
+// refreshNodes renews the nodeSession and opens all outgoing Link(s) for all the Node(s).
 func (n *Network) refreshNodes() {
 	for _, node := range n.Nodes() {
 		node.session = nodeSession{}
-		n.refreshLinks(node)
+		n.refreshEgress(node)
 	}
 }
