@@ -101,8 +101,8 @@ func EmitFunc(f func(ctx context.Context, data any, emit func(any)) error) NodeO
 	}
 }
 
-// AddNode adds a new Node in the network.
-// Node key is retrieved from the provided [Key] function if not given.
+// AddNode adds a new Node in the Network.
+// Node key is retrieved from the provided [KeyFunc] function if not given.
 func (n *Network) AddNode(opt ...NodeOpt) (string, error) {
 	// check if session is in progress
 	n.session.mu.RLock()
@@ -176,7 +176,7 @@ func (n *Network) removeNode(k string) error {
 	return nil
 }
 
-// Nodes returns all the nodes in the Network.
+// Nodes returns all the Node(s) in the Network.
 func (n *Network) Nodes() []*Node {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
@@ -197,8 +197,8 @@ func (n *Network) Keys() []string {
 	return keys
 }
 
-// Seeds returns all the nodes that have only egress links.
-// Network.Node should be called to get actual node.
+// Seeds returns all the nodes that have only egress Link(s).
+// Network.Node should be called to get actual Node.
 func (n *Network) Seeds() []string {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
@@ -214,7 +214,7 @@ func (n *Network) Seeds() []string {
 	return keys
 }
 
-// Terminals returns all the nodes that have only ingress links.
+// Terminals returns all the nodes that have only ingress Link(s).
 // Network.Node should be called to get actual Node.
 func (n *Network) Terminals() []string {
 	n.mu.RLock()
@@ -529,7 +529,7 @@ func (n *Network) nodeUp(ctx context.Context, node *Node) error {
 	return nil
 }
 
-// refreshNodes opens all outgoing links and renews the session for all the nodes.
+// refreshNodes renews the nodeSession and opens all outgoing Link(s) for all the Node(s).
 func (n *Network) refreshNodes() {
 	for _, node := range n.Nodes() {
 		node.session = nodeSession{}

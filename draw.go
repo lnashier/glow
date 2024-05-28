@@ -20,7 +20,7 @@ const tmpl = `strict digraph {
 		];
     {{ end -}}
     {{ range .Links -}}
-        "{{ .From.Key }}" -> "{{ .To.Key }}"
+        "{{ fromNode . }}" -> "{{ toNode . }}"
 		[
 			label="{{ linkProp "label" . }}",
 			color="{{ linkProp "color" . }}"
@@ -33,6 +33,12 @@ const tmpl = `strict digraph {
 func DOT(n *Network) ([]byte, error) {
 	t := template.New("tmpl")
 	t.Funcs(template.FuncMap{
+		"fromNode": func(link *Link) string {
+			return link.x.Key()
+		},
+		"toNode": func(link *Link) string {
+			return link.y.Key()
+		},
 		"netProp": func(prop string) any {
 			switch prop {
 			case "label":

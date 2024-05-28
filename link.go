@@ -8,7 +8,7 @@ import (
 // Link captures the connection between two nodes.
 // Data flows from x to y over the Link.
 // A Link can have 3 states:
-//   - Closed - The Link enters the closed state when the X Node goes away.
+//   - Closed - The Link enters the closed state when the Link.From Node goes away.
 //     The Link remains in this state until a new session (Network.Start) or system restart.
 //   - Paused - The Link enters the paused state when Network.PauseLink is called.
 //     The Link remains in this state until resumed (Network.ResumeLink) or system restart.
@@ -39,16 +39,6 @@ func Size(k int) LinkOpt {
 	return func(l *Link) {
 		l.size = k
 	}
-}
-
-// From returns the key of the "from" Node connected by this Link.
-func (l *Link) From() *Node {
-	return l.x
-}
-
-// To returns the key of the "to" Node connected by this Link.
-func (l *Link) To() *Node {
-	return l.y
 }
 
 // Tally returns the total count of data transmitted over the link thus far.
@@ -298,7 +288,7 @@ func (n *Network) Egress(key string) []*Link {
 	return links
 }
 
-// closeEgress closes all outgoing links for the Node.
+// closeEgress closes all outgoing Link(s) for the Node.
 func (n *Network) closeEgress(node *Node) {
 	for _, link := range n.Egress(node.Key()) {
 		link.once.Do(func() {
@@ -308,7 +298,7 @@ func (n *Network) closeEgress(node *Node) {
 	}
 }
 
-// refreshEgress opens all outgoing links for the Node.
+// refreshEgress opens all outgoing Link(s) for the Node.
 func (n *Network) refreshEgress(node *Node) {
 	for _, link := range n.Egress(node.Key()) {
 		if link.closed {
